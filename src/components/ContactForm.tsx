@@ -11,6 +11,43 @@ import { SectionHeading } from '@/components/ui'
 type Status = 'idle' | 'success' | 'error'
 
 /**
+ * Length caps, by field.
+ *
+ * Kept next to `fieldError` rather than in `site.ts` on purpose: these are
+ * validation rules, not copy, and a cap that disagreed with the validator
+ * would let someone fill a field the form then refuses to accept.
+ *
+ * They are also a spam control. An uncapped textarea on a public form is an
+ * invitation to paste a few hundred kilobytes into whatever inbox this
+ * eventually posts to.
+ */
+const MAX_LENGTH: Record<string, number> = {
+  name: 80,
+  company: 100,
+  email: 120,
+  phone: 20,
+  location: 120,
+  turbine: 160,
+  requirement: 1500,
+}
+
+/** Lets the browser fill known details rather than making people retype them. */
+const AUTOCOMPLETE: Record<string, string> = {
+  name: 'name',
+  company: 'organization',
+  email: 'email',
+  phone: 'tel',
+}
+
+/**
+ * Anything that is not a digit or the punctuation real phone numbers are
+ * written with. Global, so it is only ever used with `replace` — `.test()` on
+ * a global regex advances `lastIndex` between calls and starts returning false
+ * for input it rejected a moment earlier.
+ */
+const PHONE_STRIP = /[^\d\s+().-]/g
+
+/**
  * Single source of truth for what makes one field invalid.
  *
  * Both the submit check and the live re-check call this, so a red border can
@@ -26,8 +63,20 @@ function fieldError(name: string, raw: string): boolean {
   // not an error.
   if (!value) return false
 
+  // Checked here as well as capped on the input, because `maxLength` is a
+  // convenience for typing and nothing more: it does not survive a paste in
+  // every browser, and it does not exist at all for anything POSTing directly.
+  const limit = MAX_LENGTH[name]
+  if (limit && value.length > limit) return true
+
   if (name === 'email') return !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-  if (name === 'phone') return !/^[+]?[\d\s().-]{7,20}$/.test(value)
+  if (name === 'phone') {
+    // 7 digits is the shortest real subscriber number; the punctuation is not
+    // counted towards it, so "+1 (555) 010-9999" passes on its digits alone.
+    const digits = value.replace(/\D/g, '')
+    if (digits.length < 7 || digits.length > 15) return true
+    return value.replace(PHONE_STRIP, '') !== value
+  }
   if (name === 'requirement') return value.length < 10
 
   return false
@@ -78,10 +127,24 @@ export function ContactForm() {
       | HTMLSelectElement
       | HTMLTextAreaElement
 
-    const { name, value } = target
+    const { name } = target
+    if (!name) return
+
+    // Strip anything that is not part of a phone number, in place. `type="tel"`
+    // deliberately does not restrict input — it only hints at a keypad — so
+    // without this a phone field happily accepts letters and then fails
+    // validation on submit, which is a worse experience than not accepting
+    // them at all. Only touched when it actually changes, so the caret is not
+    // disturbed while typing valid characters.
+    if (name === 'phone') {
+      const cleaned = target.value.replace(PHONE_STRIP, '').slice(0, MAX_LENGTH.phone)
+      if (cleaned !== target.value) target.value = cleaned
+    }
+
+    const value = target.value
     // Still wrong — keep the border up rather than flickering it off per
     // keystroke and back on at submit.
-    if (!name || !errors[name] || fieldError(name, value)) return
+    if (!errors[name] || fieldError(name, value)) return
 
     const next = { ...errors }
     delete next[name]
@@ -227,11 +290,24 @@ export function ContactForm() {
                       name={field.name}
                       rows={5}
                       placeholder={field.placeholder}
+                      maxLength={MAX_LENGTH[field.name]}
                       aria-invalid={
                         errors[field.name] ? true : undefined
                       }
+                      aria-describedby={`${field.name}-limit`}
                       className={inputCls(field.name)}
                     />
+                  )}
+
+                  {/* The only field where the cap is worth showing: it is the
+                      one somebody might write enough in to hit. */}
+                  {field.name === 'requirement' && (
+                    <p
+                      id={`${field.name}-limit`}
+                      className="mt-1.5 text-right text-xs text-charcoal/45"
+                    >
+                      Up to {MAX_LENGTH.requirement.toLocaleString()} characters
+                    </p>
                   )}
 
                   {/* Normal inputs */}
@@ -243,6 +319,17 @@ export function ContactForm() {
                         name={field.name}
                         type={field.type}
                         placeholder={field.placeholder}
+                        maxLength={MAX_LENGTH[field.name]}
+                        // A numeric keypad on phones, and the browser's own
+                        // autofill for the rest. `type` alone gets neither.
+                        inputMode={
+                          field.name === 'phone'
+                            ? 'tel'
+                            : field.name === 'email'
+                              ? 'email'
+                              : undefined
+                        }
+                        autoComplete={AUTOCOMPLETE[field.name]}
                         aria-invalid={
                           errors[field.name]
                             ? true
