@@ -2,23 +2,16 @@ import * as THREE from 'three'
 import type { Country } from '@/content/site'
 import {
   createGlowTexture,
+  createRotorTexture,
   greatCircleArc,
   latLonToVector3,
   rotationForLatLon,
-  type DotData,
 } from './globe-geo'
 
 export const GLOBE_RADIUS = 100
 
 const PALETTE = {
-  // Light enough that the sphere reads as a planet body rather than a
-  // silhouette, dark enough that the dots stay the brightest thing on it.
-  core: '#0a2f42',
-  rim: '#16697f',
   atmosphere: '#00c2a8',
-  dotA: '#2aa39c',
-  dotB: '#2dbe60',
-  dotHot: '#7dcb45',
   // White so the headquarters reads as the brightest point on the globe.
   hq: '#ffffff',
   alliance: '#00c2a8',
@@ -55,13 +48,19 @@ export type GlobeSceneOptions = {
   onSelect?: (country: Country) => void
   /** Fired once the first frame has been drawn. */
   onReady?: () => void
-  /** Fired once the worker-generated dot cloud has been installed. */
-  onDotsReady?: (count: number) => void
+  /** Fired once the Earth imagery has decoded and been applied. */
+  onImageryReady?: () => void
 }
 
 type ArcRecord = {
   line: THREE.Line
   material: THREE.ShaderMaterial
+}
+
+type RotorRecord = {
+  material: THREE.SpriteMaterial
+  speed: number
+  phase: number
 }
 
 type HaloRecord = {
@@ -74,14 +73,32 @@ type HaloRecord = {
 /** Everything needed to restyle one beacon as hover/selection changes. */
 type MarkerRecord = {
   country: Country
-  beacon: THREE.Mesh
+  beacon: THREE.Sprite
   glowMaterial: THREE.SpriteMaterial
   glow: THREE.Sprite
   ring: THREE.Mesh
   ringMaterial: THREE.MeshBasicMaterial
   baseScale: number
+  /**
+   * The rotor needs its own size, separate from `baseScale`.
+   *
+   * `baseScale` is the country's weighting (1 / 1.25 / 1.5) and drives the
+   * ring, which is geometry sized in world units already. A sprite's scale *is*
+   * its size in world units, so reusing the weighting directly drew the rotor
+   * about 5px across — a dot with a wobble, not a turbine.
+   */
+  baseRotorScale: number
   baseGlowScale: number
+  /** Surface normal in globe-local space, for the facing test each frame. */
+  normal: THREE.Vector3
 }
+
+/**
+ * Rotor diameter in world units, against a globe radius of 100 — roughly 30px
+ * on a desktop frame, which is where the three blades stay legible. Much under
+ * 20px and it collapses into a shapeless "Y".
+ */
+const ROTOR_SIZE = 9
 
 /** Amber, freed up now that the HQ beacon itself is white. */
 const HOVER_RING = '#ffc107'
@@ -109,11 +126,10 @@ export class GlobeScene {
   private arcsGroup = new THREE.Group()
   private markersGroup = new THREE.Group()
 
-  private dotMaterial!: THREE.ShaderMaterial
-  private dots: THREE.Points | null = null
   private disposed = false
   private arcs: ArcRecord[] = []
   private halos: HaloRecord[] = []
+  private rotors: RotorRecord[] = []
   private markers: MarkerRecord[] = []
   private hitTargets: THREE.Mesh[] = []
   private selectedName: string | null = null
@@ -124,6 +140,8 @@ export class GlobeScene {
   private target = { x: 0.32, y: 0 }
   private velocity = { x: 0, y: 0 }
   private autoRotate = true
+  /** Held facing a selected country; released by dragging or the spin toggle. */
+  private pinned = false
   private dragging = false
   private pointerId: number | null = null
   private lastPointer = { x: 0, y: 0 }
@@ -131,7 +149,13 @@ export class GlobeScene {
 
   /** Beacon glows differ only by colour, so cache one texture per colour. */
   private glowCache = new Map<string, THREE.Texture>()
+  private rotorCache = new Map<string, THREE.Texture>()
   private deferred: number[] = []
+
+  /** Scratch vectors for the per-frame facing test — reused, never allocated. */
+  private tmpNormal = new THREE.Vector3()
+  private tmpPosition = new THREE.Vector3()
+  private tmpToCamera = new THREE.Vector3()
 
   private raycaster = new THREE.Raycaster()
   private ndc = new THREE.Vector2()
@@ -154,11 +178,9 @@ export class GlobeScene {
     const width = Math.max(clientWidth, 1)
     const height = Math.max(clientHeight, 1)
 
-    // 360 * tan(20°) ≈ 131 world units of half-height. The globe (r=100) fills
-    // ~76% of it and the tallest arcs (r≈124, see greatCircleArc) ~95%, so the
-    // sphere reads large without the arcs clipping at the top and bottom.
     this.camera = new THREE.PerspectiveCamera(40, width / height, 1, 2000)
-    this.camera.position.set(0, 0, 360)
+    this.camera.position.set(0, 0, 312)
+    this.frameCamera(width, height)
 
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -184,8 +206,9 @@ export class GlobeScene {
     // Only the cheap essentials are built synchronously. Markers and arcs are
     // spread over later frames so no single task crosses the 50ms long-task
     // threshold — building them all inline cost ~360ms of blocking.
-    this.buildCore()
-    this.buildDotMaterial()
+    // The photographic Earth carries the geography now, so the shaded land
+    // shell and the dot cloud that preceded it are both gone from the scene.
+    this.buildEarth()
     this.buildAtmosphere()
     this.buildStarfield()
     this.defer(() => {
@@ -251,6 +274,15 @@ export class GlobeScene {
     return texture
   }
 
+  /** Same per-colour caching as the glow: 14 markers, three colours. */
+  private rotorTexture(hex: string): THREE.Texture {
+    const cached = this.rotorCache.get(hex)
+    if (cached) return cached
+    const texture = this.track(createRotorTexture(hex))
+    this.rotorCache.set(hex, texture)
+    return texture
+  }
+
   /** Runs work on a later frame so construction never blocks in one burst. */
   private defer(fn: () => void) {
     this.deferred.push(
@@ -260,118 +292,104 @@ export class GlobeScene {
     )
   }
 
-  /** Opaque inner sphere — gives the dots something to be occluded by. */
-  private buildCore() {
-    // 48 segments is indistinguishable from 64 at this on-screen size.
-    const geometry = this.track(new THREE.SphereGeometry(GLOBE_RADIUS * 0.992, 48, 48))
+  /**
+   * Photographic Earth, in the manner of the globe.gl examples.
+   *
+   * Blue-marble daylight imagery, served from `public/globe/` rather than
+   * unpkg — an external texture would put a third-party CDN on the critical
+   * path of the page and hand it a chance to CORS-fail or simply go down.
+   *
+   * The night-lights map went first and was unreadable: it is beautiful in a
+   * demo on a black page, but here it left most of the sphere near-black, with
+   * the continents legible only where cities happen to be dense. A marketing
+   * page needs the viewer to recognise where the work happens at a glance.
+   *
+   * Lit rather than unlit. A `MeshBasicMaterial` would show the map flat and
+   * fully bright right to the edge, which loses the sphere; one directional
+   * light plus a strong ambient gives the terminator that makes it read as a
+   * ball, without dimming the far side into unreadability. The topology map
+   * drives a light bump so mountain ranges catch the light.
+   *
+   * The texture arrives after the scene does, so the globe fades it in — see
+   * `onImageryReady`.
+   */
+  private buildEarth() {
+    const geometry = this.track(new THREE.SphereGeometry(GLOBE_RADIUS, 96, 64))
     const material = this.track(
-      new THREE.ShaderMaterial({
-        uniforms: {
-          uCore: { value: srgb(PALETTE.core) },
-          uRim: { value: srgb(PALETTE.rim) },
-        },
-        vertexShader: /* glsl */ `
-          varying vec3 vNormal;
-          void main() {
-            vNormal = normalize(normalMatrix * normal);
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: /* glsl */ `
-          uniform vec3 uCore;
-          uniform vec3 uRim;
-          varying vec3 vNormal;
-          void main() {
-            float facing = abs(dot(normalize(vNormal), vec3(0.0, 0.0, 1.0)));
-            float limb = pow(1.0 - facing, 1.9);
-            gl_FragColor = vec4(mix(uCore, uRim, limb), 1.0);
-          }
-        `,
-      }),
-    )
-    this.globe.add(new THREE.Mesh(geometry, material))
-  }
-
-  /**
-   * Creates the dot shader up front. The point cloud itself arrives later via
-   * {@link applyDots} — generating it is the expensive part and now happens in
-   * a worker, so the constructor stays cheap.
-   */
-  private buildDotMaterial() {
-    this.dotMaterial = this.track(
-      new THREE.ShaderMaterial({
+      new THREE.MeshPhongMaterial({
+        color: 0x223a4a,
+        shininess: 6,
         transparent: true,
-        depthWrite: false,
-        uniforms: {
-          uTime: { value: 0 },
-          uPixelRatio: { value: this.renderer.getPixelRatio() },
-          uColorA: { value: srgb(PALETTE.dotA) },
-          uColorB: { value: srgb(PALETTE.dotB) },
-          uColorHot: { value: srgb(PALETTE.dotHot) },
-        },
-        vertexShader: /* glsl */ `
-          attribute float aRandom;
-          attribute float aSize;
-          uniform float uTime;
-          uniform float uPixelRatio;
-          varying float vRandom;
-          varying float vFacing;
-
-          void main() {
-            vRandom = aRandom;
-
-            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-            vec3 worldNormal = normalize(mat3(modelMatrix) * normalize(position));
-            vFacing = dot(worldNormal, normalize(cameraPosition - worldPosition.xyz));
-
-            vec4 mvPosition = viewMatrix * worldPosition;
-            float twinkle = 0.78 + 0.22 * sin(uTime * 1.7 + aRandom * 62.83);
-
-            gl_PointSize = aSize * uPixelRatio * twinkle * (430.0 / -mvPosition.z);
-            gl_Position = projectionMatrix * mvPosition;
-          }
-        `,
-        fragmentShader: /* glsl */ `
-          uniform vec3 uColorA;
-          uniform vec3 uColorB;
-          uniform vec3 uColorHot;
-          varying float vRandom;
-          varying float vFacing;
-
-          void main() {
-            vec2 offset = gl_PointCoord - vec2(0.5);
-            float distSq = dot(offset, offset);
-            if (distSq > 0.25) discard;
-
-            float alpha = smoothstep(0.25, 0.05, distSq);
-            vec3 color = mix(uColorA, uColorB, vRandom);
-            color = mix(color, uColorHot, step(0.93, vRandom));
-
-            float facing = clamp(vFacing, 0.0, 1.0);
-            alpha *= 0.10 + 0.90 * pow(facing, 0.55);
-
-            gl_FragColor = vec4(color, alpha);
-          }
-        `,
+        opacity: 1,
       }),
     )
-  }
+    const mesh = new THREE.Mesh(geometry, material)
+    // Align the imagery with our own lat/lon convention.
+    //
+    // An equirectangular map puts longitude -180 at u = 0, so longitude 0 sits
+    // at u = 0.5. SphereGeometry, though, places u = 0.25 on the +Z axis — and
+    // +Z is where `latLonToVector3` puts longitude 0. Left uncorrected the map
+    // is a quarter turn out: selecting Denmark spun the globe to the right
+    // place and showed North America there, which reads as "the markers are
+    // wrong" when in fact the markers were the only part that was right.
+    mesh.rotation.y = -Math.PI / 2
+    this.globe.add(mesh)
 
-  /**
-   * Installs the worker-generated point cloud. Safe to call once; ignored if
-   * the scene has already been disposed.
-   */
-  applyDots(data: DotData) {
-    if (this.disposed || this.dots) return
+    // Ambient does most of the work so the whole visible face stays readable;
+    // the directional light only has to model the curvature.
+    this.scene.add(this.track(new THREE.AmbientLight(0xffffff, 2.6)))
+    const key = new THREE.DirectionalLight(0xffffff, 1.1)
+    key.position.set(-1, 0.6, 1)
+    this.scene.add(key)
 
-    const geometry = this.track(new THREE.BufferGeometry())
-    geometry.setAttribute('position', new THREE.BufferAttribute(data.positions, 3))
-    geometry.setAttribute('aRandom', new THREE.BufferAttribute(data.randoms, 1))
-    geometry.setAttribute('aSize', new THREE.BufferAttribute(data.sizes, 1))
+    // The imagery completes the loading bar, so *something* has to complete it
+    // even when the image never arrives. Without this a 404, a decode failure
+    // or a stalled connection left the loader spinning forever and the globe
+    // permanently hidden behind it — the sphere and every marker were already
+    // built and working underneath. Firing once, whichever path gets there
+    // first, means the worst case is an untextured globe rather than no globe.
+    let settled = false
+    const settle = () => {
+      if (settled || this.disposed) return
+      settled = true
+      this.options.onImageryReady?.()
+    }
+    const stall = window.setTimeout(settle, 8000)
+    this.disposables.push({ dispose: () => window.clearTimeout(stall) })
 
-    this.dots = new THREE.Points(geometry, this.dotMaterial)
-    this.globe.add(this.dots)
-    this.options.onDotsReady?.(data.count)
+    const loader = new THREE.TextureLoader()
+    loader.load('/globe/earth-blue-marble.jpg', (map) => {
+      if (this.disposed) return
+      map.colorSpace = THREE.SRGBColorSpace
+      material.map = map
+      // Graded towards the brand rather than left photographic.
+      //
+      // `color` multiplies the texture, so a desaturated teal pulls the
+      // ochres and cloud-whites of the raw imagery back towards the navy /
+      // teal / green the rest of the site is built from. Left at white the
+      // globe reads as a stock asset dropped into the page — and two things
+      // actually break: the leaf-green selection ring loses contrast over
+      // bright ocean, and the white HQ dot can vanish against cloud or ice.
+      material.color.set(0x7fbdb4)
+      material.needsUpdate = true
+      this.track(map)
+      window.clearTimeout(stall)
+      settle()
+    },
+    undefined,
+    () => {
+      // Flat tinted sphere, markers and arcs intact.
+      console.warn('Globe: Earth imagery failed to load; showing untextured globe')
+      window.clearTimeout(stall)
+      settle()
+    })
+    loader.load('/globe/earth-topology.png', (bump) => {
+      if (this.disposed) return
+      material.bumpMap = bump
+      material.bumpScale = 6
+      material.needsUpdate = true
+      this.track(bump)
+    })
   }
 
   /** Fresnel shell that reads as atmospheric haze around the limb. */
@@ -439,7 +457,6 @@ export class GlobeScene {
 
   /** Beacon, bloom sprite, expanding halo and pointer hit target per country. */
   private buildMarkers() {
-    const beaconGeometry = this.track(new THREE.SphereGeometry(1.9, 16, 16))
     const haloGeometry = this.track(new THREE.RingGeometry(2.4, 3.1, 40))
     // Ring used purely for hover / selection state. Sits outside the beacon's
     // bloom so it stays readable against the additive glow.
@@ -454,14 +471,41 @@ export class GlobeScene {
       const normal = surface.clone().normalize()
       const scale = country.isHq ? 1.5 : country.isAlliance ? 1.25 : 1
 
-      // Beacon head
-      const beacon = new THREE.Mesh(
-        beaconGeometry,
-        this.track(new THREE.MeshBasicMaterial({ color })),
+      // A turning rotor, pinned to the surface.
+      //
+      // Kept flush with the surface rather than raised. An earlier version put
+      // the marker on a bar standing ~17 units off the sphere; its head then
+      // separated from the selection ring left on the surface, and anywhere
+      // except dead centre it floated over a neighbouring country.
+      const beacon = new THREE.Sprite(
+        this.track(
+          new THREE.SpriteMaterial({
+            map: this.rotorTexture(color),
+            transparent: true,
+            depthWrite: false,
+            // A sprite is a billboard: one flat quad, every corner at the same
+            // view depth. Near the limb the sphere curves in front of the far
+            // corners of that quad and lops the blades off mid-span — which
+            // looked like a broken icon but was the globe eating it.
+            //
+            // Depth testing off draws the rotor whole. The cost is that far-side
+            // markers would show through the planet, so `updateMarkerFacing`
+            // hides those explicitly each frame instead.
+            depthTest: false,
+          }),
+        ),
       )
-      beacon.position.copy(normal).multiplyScalar(GLOBE_RADIUS + 1.4)
-      beacon.scale.setScalar(scale)
+      beacon.position.copy(normal).multiplyScalar(GLOBE_RADIUS + 0.9)
+      beacon.scale.setScalar(ROTOR_SIZE * scale)
       this.markersGroup.add(beacon)
+      this.rotors.push({
+        material: beacon.material,
+        // Each rotor runs at its own rate and starts at its own angle. Marching
+        // in lockstep reads as one animation applied to a row of icons; out of
+        // phase, they read as fourteen separate turbines.
+        speed: 0.5 + Math.random() * 0.5,
+        phase: Math.random() * Math.PI * 2,
+      })
 
       // Bloom sprite
       const glow = new THREE.Sprite(
@@ -476,7 +520,12 @@ export class GlobeScene {
         ),
       )
       glow.position.copy(beacon.position)
-      glow.scale.setScalar(20 * scale)
+      // The HQ glow used to burn out into a solid white disc that covered the
+      // country it was marking — most visible once selection actually held the
+      // country facing the camera. The ring and the beacon head carry the
+      // emphasis instead, so the glow only has to suggest a halo.
+      const glowScale = country.isHq ? 13 : 20 * scale
+      glow.scale.setScalar(glowScale)
       this.markersGroup.add(glow)
 
       // Expanding surface halo
@@ -535,7 +584,9 @@ export class GlobeScene {
         ring,
         ringMaterial,
         baseScale: scale,
-        baseGlowScale: 20 * scale,
+        baseRotorScale: ROTOR_SIZE * scale,
+        baseGlowScale: glowScale,
+        normal: normal.clone(),
       })
     }
 
@@ -547,6 +598,35 @@ export class GlobeScene {
    * larger leaf-green one — different hue *and* different size, so the two stay
    * distinguishable for colour-blind viewers too.
    */
+  /**
+   * Hides the markers on the far side of the planet.
+   *
+   * The rotor sprites draw with `depthTest: false` so the globe cannot clip
+   * their blades, which means the depth buffer is no longer doing this job and
+   * something has to. Testing the surface normal against the direction to the
+   * camera is the same question the depth buffer was answering, just asked per
+   * marker instead of per pixel — and at fourteen markers that is nothing.
+   *
+   * The small positive cut-off rather than zero: exactly on the limb a rotor is
+   * half behind the planet anyway, and popping it out slightly early is much
+   * less noticeable than letting it hang off the edge.
+   */
+  private updateMarkerFacing() {
+    for (const marker of this.markers) {
+      this.tmpNormal.copy(marker.normal).applyQuaternion(this.globe.quaternion)
+      this.tmpPosition
+        .copy(this.tmpNormal)
+        .multiplyScalar(GLOBE_RADIUS)
+        .add(this.world.position)
+      const facing = this.tmpNormal.dot(
+        this.tmpToCamera.copy(this.camera.position).sub(this.tmpPosition).normalize(),
+      )
+      const visible = facing > 0.05
+      marker.beacon.visible = visible
+      marker.glow.visible = visible
+    }
+  }
+
   private refreshMarkerStates() {
     for (const marker of this.markers) {
       const isSelected = marker.country.name === this.selectedName
@@ -557,7 +637,7 @@ export class GlobeScene {
         marker.ringMaterial.color.set(SELECT_RING)
         marker.ringMaterial.opacity = isHovered ? 1 : 0.92
         marker.ring.scale.setScalar(marker.baseScale * (isHovered ? 1.5 : 1.35))
-        marker.beacon.scale.setScalar(marker.baseScale * 1.55)
+        marker.beacon.scale.setScalar(marker.baseRotorScale * 1.35)
         marker.glowMaterial.opacity = 1
         marker.glow.scale.setScalar(marker.baseGlowScale * 1.35)
       } else if (isHovered) {
@@ -565,14 +645,14 @@ export class GlobeScene {
         marker.ringMaterial.color.set(HOVER_RING)
         marker.ringMaterial.opacity = 1
         marker.ring.scale.setScalar(marker.baseScale)
-        marker.beacon.scale.setScalar(marker.baseScale * 1.3)
+        marker.beacon.scale.setScalar(marker.baseRotorScale * 1.2)
         // Glow is deliberately not boosted here — the ring is the hover signal,
         // and a brighter bloom just swallows it.
         marker.glowMaterial.opacity = 0.85
         marker.glow.scale.setScalar(marker.baseGlowScale)
       } else {
         marker.ring.visible = false
-        marker.beacon.scale.setScalar(marker.baseScale)
+        marker.beacon.scale.setScalar(marker.baseRotorScale)
         marker.glowMaterial.opacity = 0.85
         marker.glow.scale.setScalar(marker.baseGlowScale)
       }
@@ -657,6 +737,9 @@ export class GlobeScene {
 
   setAutoRotate(enabled: boolean) {
     this.autoRotate = enabled && !this.options.reducedMotion
+    // Asking for spin explicitly releases a country pin — otherwise the toggle
+    // would look broken after a selection.
+    if (enabled) this.pinned = false
   }
 
   setArcsVisible(visible: boolean) {
@@ -671,6 +754,12 @@ export class GlobeScene {
     const turns = Math.round((this.rotation.y - next.y) / (Math.PI * 2))
     this.target = { x: next.x, y: next.y + turns * Math.PI * 2 }
     this.velocity = { x: 0, y: 0 }
+    // This is what makes it a pin. Without it the idle spin keeps advancing
+    // `target.y` every frame, so the globe turns towards the country and then
+    // sails straight past it — picking a country visibly failed to show that
+    // country. The flag is internal rather than a call to `setAutoRotate`, so
+    // the user's own Auto-Spin toggle is not silently flipped underneath them.
+    this.pinned = true
   }
 
   dispose() {
@@ -728,7 +817,7 @@ export class GlobeScene {
     const time = this.clockOffset
 
     // Idle spin
-    if (this.autoRotate && !this.dragging) {
+    if (this.autoRotate && !this.dragging && !this.pinned) {
       this.target.y += delta * 0.11
     }
 
@@ -747,9 +836,19 @@ export class GlobeScene {
     this.rotation.y += (this.target.y - this.rotation.y) * ease
     this.rotation.x += (this.target.x - this.rotation.x) * ease
     this.globe.rotation.set(this.rotation.x, this.rotation.y, 0)
+    // After the rotation, before the render — the facing test reads the
+    // quaternion this line just wrote.
+    this.globe.updateMatrixWorld()
+    this.updateMarkerFacing()
 
     if (!this.options.reducedMotion) {
-      this.dotMaterial.uniforms.uTime.value = time
+      // Turbines turn. `SpriteMaterial.rotation` spins the billboard in screen
+      // space, which is what keeps the rotor facing the viewer wherever it is
+      // on the sphere. Skipped entirely under reduced motion — the rotor still
+      // reads as a turbine standing still.
+      for (const rotor of this.rotors) {
+        rotor.material.rotation = rotor.phase + time * rotor.speed
+      }
 
       // Halo rings breathe outward from each beacon
       for (const halo of this.halos) {
@@ -771,16 +870,61 @@ export class GlobeScene {
 
   // ─── Input ──────────────────────────────────────────────────────
 
+  /**
+   * Pulls the camera to whatever distance frames the globe in the *tighter* of
+   * the two axes.
+   *
+   * A perspective camera's `fov` is vertical, so distance alone only controls
+   * the vertical fit. On the wide desktop frame that is the binding constraint
+   * and a fixed distance is fine; the mobile frame is portrait (a 16/9 box with
+   * a 460px `minHeight` ends up taller than it is wide), and there the sphere
+   * overflows sideways and gets sliced down both edges. Deriving the distance
+   * from both axes fills the desktop frame and keeps the phone's silhouette
+   * whole, with no breakpoint to maintain.
+   *
+   * FILL is the sphere's diameter as a multiple of the frame's *shorter* side,
+   * so the globe spans nearly the full height of a wide frame and nearly the
+   * full width of a portrait one.
+   *
+   * It sits just under 1 on purpose. Two earlier attempts went past that and
+   * both looked worse, in the same way: at 1.2 the limb only survived on one
+   * side, so the sphere read as a lopsided crop rather than a planet, and at
+   * full corner coverage there was no horizon on screen at all and it stopped
+   * reading as a sphere entirely. The silhouette is what says "globe" — keep
+   * all of it, and let the small margin carry the atmosphere glow.
+   *
+   * Zooming is done with the focal length, not by flying the camera in. A
+   * sphere of radius 100 seen from ~130 units would cover the frame too, but
+   * that close the perspective is severe: the near face balloons, the limb
+   * curves away hard, and the camera ends up almost inside the atmosphere
+   * shell at radius 118. Holding the distance and narrowing the fov is the
+   * telephoto equivalent — same framing, no distortion.
+   */
+  private frameCamera(width: number, height: number) {
+    const SPHERE_RADIUS = 100
+    const FILL = 1.08
+
+    // Half-height of the frustum at the globe, chosen so the sphere's diameter
+    // projects to FILL times the shorter side of the canvas.
+    const shorterSide = Math.min(width, height)
+    const halfHeight = (SPHERE_RADIUS * (height / 2)) / ((FILL / 2) * shorterSide)
+    const halfFov = Math.atan(halfHeight / this.camera.position.z)
+
+    this.camera.fov = (halfFov * 2 * 180) / Math.PI
+    this.camera.updateProjectionMatrix()
+
+  }
+
   private handleResize = () => {
     const width = Math.max(this.container.clientWidth, 1)
     const height = Math.max(this.container.clientHeight, 1)
     this.camera.aspect = width / height
+    this.frameCamera(width, height)
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(width, height, false)
-    // 1.5 rather than 2 — at this dot size the extra samples are not visible,
+    // 1.5 rather than 2 — the extra samples are not visible on this imagery,
     // but the fragment cost scales with the square of the ratio.
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
-    this.dotMaterial.uniforms.uPixelRatio.value = this.renderer.getPixelRatio()
 
     // On wide layouts the detail card sits over the right-hand side, so slide
     // the globe into the empty space on the left rather than under the card.
@@ -788,10 +932,15 @@ export class GlobeScene {
     const halfHeightWorld =
       Math.tan((this.camera.fov * Math.PI) / 180 / 2) * this.camera.position.z
     const halfWidthWorld = halfHeightWorld * this.camera.aspect
-    this.world.position.x = width >= 1024 ? -halfWidthWorld * 0.26 : 0
+    // Enough to keep the focused country clear of the detail card, and no
+    // more. Shifting hard (this was 0.3) just relocates the dead space to the
+    // other side of the frame and crushes the continents against the edge.
+    this.world.position.x = width >= 1024 ? -halfWidthWorld * 0.12 : 0
   }
 
   private onPointerDown = (event: PointerEvent) => {
+    // Touching the globe is a clear intent to take over from the pin.
+    this.pinned = false
     this.dragging = true
     this.pointerMoved = false
     this.pointerId = event.pointerId

@@ -6,16 +6,8 @@ import { COUNTRIES, type Country, type Region } from '@/content/site'
 import { usePrefersReducedMotion } from '@/lib/hooks'
 import { Flag } from '@/components/Flag'
 import { ScrollRail } from '@/components/ScrollRail'
-import { GlobeScene, GLOBE_RADIUS } from './globe-scene'
-import type { DotData } from './land-dots'
-import type { GlobeWorkerResponse } from './globe.worker'
+import { GlobeScene } from './globe-scene'
 import { GlobeLoaderInner, stageValue, type GlobeStage } from './GlobeLoader'
-
-/** Fallback for environments where a Worker can't be created. */
-async function generateOnMainThread(count: number, install: (data: DotData) => void) {
-  const { generateLandDots } = await import('./land-dots')
-  install(generateLandDots(count, GLOBE_RADIUS))
-}
 
 type RegionFilter = 'All' | Region
 
@@ -96,14 +88,13 @@ function useFullyInView(ref: React.RefObject<HTMLElement | null>) {
 /* ─── Shared WebGL canvas ───────────────────────────────────────── */
 
 type CanvasProps = {
-  dotDensity: number
   onHover?: (country: Country | null) => void
   onSelect?: (country: Country) => void
   sceneRef?: (scene: GlobeScene | null) => void
   className?: string
 }
 
-function GlobeCanvas({ dotDensity, onHover, onSelect, sceneRef, className = '' }: CanvasProps) {
+function GlobeCanvas({ onHover, onSelect, sceneRef, className = '' }: CanvasProps) {
   const mountRef = useRef<HTMLDivElement>(null)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -127,68 +118,43 @@ function GlobeCanvas({ dotDensity, onHover, onSelect, sceneRef, className = '' }
     const container = mountRef.current
     if (!container) return
 
+    let cancelled = false
     let scene: GlobeScene | null = null
+
     try {
       scene = new GlobeScene(container, {
         countries: COUNTRIES,
         reducedMotion,
         onHover: (country) => hoverRef.current?.(country),
         onSelect: (country) => selectRef.current?.(country),
+        // Decoding the Earth imagery is now the last real step before the
+        // globe is worth looking at, so it is what completes the loader. It
+        // replaced the dot-cloud worker: the photographic surface carries the
+        // geography, so there is no point cloud to generate and nothing left
+        // that needs a second thread.
+        onImageryReady: () => {
+          if (cancelled) return
+          setStage('ready')
+          setReady(true)
+        },
       })
       sceneRef?.(scene)
+      setStage('generating')
     } catch (error) {
       console.error('Globe: WebGL initialisation failed', error)
       setFailed(true)
       return
     }
 
-    // Phones get a sparser cloud; the sphere is physically smaller there, so
-    // the density reads the same while the buffers stay much lighter.
-    const density = window.innerWidth < 768 ? Math.round(dotDensity * 0.45) : dotDensity
-
-    let worker: Worker | null = null
-    let cancelled = false
-
-    setStage('generating')
-
-    const install = (data: DotData) => {
-      if (cancelled) return
-      scene?.applyDots(data)
-      setStage('ready')
-      setReady(true)
-    }
-
-    // Generating the dot cloud is the expensive step — keep it off the main
-    // thread so mounting the globe doesn't stall scrolling or input.
-    try {
-      worker = new Worker(new URL('./globe.worker.ts', import.meta.url))
-      worker.onmessage = (event: MessageEvent<GlobeWorkerResponse>) => {
-        install(event.data)
-        worker?.terminate()
-        worker = null
-      }
-      worker.onerror = () => {
-        worker?.terminate()
-        worker = null
-        void generateOnMainThread(density, install)
-      }
-      worker.postMessage({ count: density, radius: GLOBE_RADIUS })
-    } catch {
-      // Workers unavailable (very old browser, or a strict CSP) — still works,
-      // just with the original main-thread cost.
-      void generateOnMainThread(density, install)
-    }
-
     return () => {
       cancelled = true
-      worker?.terminate()
       sceneRef?.(null)
       scene?.dispose()
     }
     // `sceneRef` is a stable setter from the parent; the scene is rebuilt only
     // when the rendering inputs themselves change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dotDensity, reducedMotion])
+  }, [reducedMotion])
 
   if (failed) {
     return (
@@ -246,7 +212,7 @@ function HeroGlobe({ className = '' }: { className?: string }) {
             'radial-gradient(circle at 50% 50%, rgba(0,194,168,0.22) 0%, rgba(5,47,69,0) 62%)',
         }}
       />
-      <GlobeCanvas dotDensity={18000} />
+      <GlobeCanvas />
     </div>
   )
 }
@@ -260,11 +226,22 @@ function InteractiveGlobe({ className = '' }: { className?: string }) {
   )
   const [hoveredCountry, setHoveredCountry] = useState<Country | null>(null)
   const [region, setRegion] = useState<RegionFilter>('All')
-  const [autoRotate, setAutoRotate] = useState(true)
+  // Starts off, and that is the honest state: the globe opens held on the HQ
+  // with the panel reading SELECTED. It used to open spinning while still
+  // claiming a selection, so by the time you had scrolled the globe into view
+  // the named country had rotated well round the side — the panel and the
+  // sphere disagreed about what you were looking at.
+  const [autoRotate, setAutoRotate] = useState(false)
   const [showArcs, setShowArcs] = useState(true)
 
   const attachScene = useCallback((scene: GlobeScene | null) => {
     sceneRef.current = scene
+    // Pin the opening selection as soon as there is a scene to pin. The scene
+    // already starts rotated to the hub; this is what stops it drifting off.
+    if (scene) scene.focusCountry(activeCountry)
+    // `activeCountry` is only read to seed the view, and the scene is attached
+    // once — re-running this on every selection would fight `focus` below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const focus = useCallback((country: Country) => {
@@ -383,7 +360,6 @@ function InteractiveGlobe({ className = '' }: { className?: string }) {
         }}
       >
         <GlobeCanvas
-          dotDensity={26000}
           sceneRef={attachScene}
           onHover={setHoveredCountry}
           onSelect={focus}

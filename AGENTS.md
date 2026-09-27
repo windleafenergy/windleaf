@@ -253,101 +253,155 @@ Live on `/about`, above `GlobalReach` — the globe is the visual, and the cards
 below carry the same data as indexable text (a canvas is neither crawlable nor
 accessible, so don't remove them in its favour).
 
-A Stripe/GitHub-style dotted Earth built on raw Three.js (no react-three-fiber).
+A photographic Earth built on raw Three.js (no react-three-fiber, no globe.gl),
+in the manner of the globe.gl examples the client asked for. It replaced a
+dot-matrix globe; that history matters because several constants here only make
+sense as reactions to how it failed.
 
-### Performance — three constraints, each measured
+### Imagery
 
-Mounting it naively cost **1211 ms** of blocking on `/about`. It is now **17 ms
-at page load**. If you touch this, keep all three mechanisms:
+`public/globe/earth-blue-marble.jpg` (1.4 MB) and `earth-topology.png` (372 KB)
+as a bump map. Both are the NASA imagery the globe.gl examples use, **served
+from `public/` and never from unpkg** — an external texture puts a third-party
+CDN on the page's critical path and gives it a chance to CORS-fail or go down.
 
-1. **`GlobeMount` waits for the viewport.** An `IntersectionObserver` with a
-   500px `rootMargin` gates the `next/dynamic` import, so nothing WebGL happens
-   during page load or hydration. This is the single biggest win: bringing up a
-   WebGL context costs ~200 ms and compiling the shaders another ~140 ms, both
-   driver-side and unavoidable for *any* WebGL renderer — a smaller library
-   would not help. The only way to dodge them is to not do them during load.
-2. **Dot generation runs in a worker** (`globe.worker.ts` → `land-dots.ts`).
-   ~6,500 dots from 26k samples, ~45 ms, entirely off the main thread; the
-   buffers are *transferred*, so `applyDots` costs 0 ms. `land-dots.ts` must
-   stay free of any three.js import or the worker bundle drags in the renderer.
-3. **Markers and arcs build on later frames** via `defer()`. Built inline they
-   pushed construction past 300 ms; split up, no task crosses the 50 ms
-   long-task threshold. Scene construction is now ~7 ms of actual work.
+**Do not switch to `earth-night.jpg`.** It was tried and it is unreadable here:
+beautiful in a demo on a black page, but it leaves most of the sphere near-black
+with continents legible only where cities happen to be dense. A marketing page
+needs the viewer to recognise where the work happens at a glance.
 
-Also: pixel ratio is capped at 1.5 (not 2), glow sprites are memoised per colour
-(11 beacons, 3 colours), and phones get 45% of the dot density.
+The material is **lit, not unlit**. A `MeshBasicMaterial` shows the map flat and
+fully bright to the edge, which loses the sphere; ambient light does most of the
+work so the whole visible face stays readable, and one directional light models
+the curvature. `material.color` is a desaturated teal (`#7fbdb4`) that multiplies
+the texture — the raw photograph brings tan, ochre and cloud-white into a site
+built from navy/teal/green, and reads as a stock asset dropped into the page.
 
-Land is tested with point-in-polygon plus bounding-box rejection rather than
-rasterising a mask into a canvas — that kept the work worker-safe without
-needing `OffscreenCanvas`.
+**The mesh carries `rotation.y = -PI/2`, and it is not cosmetic.** An
+equirectangular map puts longitude -180 at `u = 0`, so longitude 0 sits at
+`u = 0.5`; `SphereGeometry` puts `u = 0.25` on the +Z axis, and +Z is where
+`latLonToVector3` puts longitude 0. Without the quarter turn, selecting Denmark
+span the globe to the right place and showed North America there — which reads
+as "the markers are broken" when the markers are the only part that is right.
 
-- `land-mask.ts` — **generated, do not hand-edit.** A 640x320 1-bit
-  equirectangular land mask baked from Natural Earth 1:50m data (the
-  `world-atlas` package), stored base64 (~33 KB). Lookup is O(1), which is what
-  makes filtering the dot cloud cheap. It replaced hand-drawn coastline
-  polygons that were too coarse — continents read as blobs and markers didn't
-  line up with land. If regenerating, three things must be handled or the map
-  comes out wrong: test each polygon as *exterior minus holes* (XOR-ing all
-  rings together makes unrelated landmasses cancel), drop degenerate wrap
-  slivers (one 43-point ring spanning -180..180 but only 0.8 deg tall painted a
-  solid false band across the Arctic), and verify land coverage lands near
-  29% (or ~23% with Antarctica trimmed).
-- `land-dots.ts` — the dot generator. **No three.js import** (the worker
-  depends on this).
-- `globe.worker.ts` — runs `generateLandDots` off the main thread.
-- `globe-geo.ts` — lat/lon ↔ vector maths, great-circle arcs and the beacon glow
-  texture. **No external textures or map tiles**, so it renders offline and
-  can't be CORS-blocked.
-- `globe-scene.ts` — the whole WebGL lifecycle in one framework-free class:
-  dot-matrix point cloud (Fibonacci lattice filtered by the land mask), opaque
-  core sphere, fresnel atmosphere, starfield, beacons with pulsing halos, and
-  animated great-circle arcs radiating from the Singapore hub. Auto-pauses via
-  `IntersectionObserver` + `visibilitychange`, honours `prefers-reduced-motion`,
-  and tears everything down in `dispose()`.
-- `Globe.tsx` — React wrapper. `variant="hero"` is chrome-free ambient motion
-  (home hero); `variant="interactive"` adds the region filter, HUD inspector and
-  country dock (about page).
-- `GlobeMount.tsx` — **always import the globe through this.** It `next/dynamic`s
-  with `ssr: false` *and* holds back the import until the viewport approaches.
+**The imagery load must always settle.** It completes the loading bar, so a 404,
+a decode failure or a stalled connection would otherwise leave the loader
+spinning forever over a globe that was already built and working underneath.
+`buildEarth` fires its callback exactly once via an error handler and an 8s
+timeout; worst case is an untextured globe, never no globe.
 
-**Loading and revealing are two different moments — keep them apart.** The globe
-starts building 500px early (that is the whole performance mechanism above), but
-it does not *appear* until the frame is fully on screen, gated by
-`useFullyInView` in `Globe.tsx`. Without that split the fade ran while half the
-sphere was still below the fold, so you scrolled into an animation that was
-already finishing.
+### Markers
 
-**The bar is split 55/45 between work and scroll, and the lopsidedness is the
-point.** The three build stages finish in well under a second while the scroll
-into view takes as long as the reader takes. Letting the stages span the whole
-bar — which they originally did, reaching 88% — made it fill instantly and then
-inch: all the visible motion was in the wrong place. Building now compresses
-into the first 55% (`stageValue(stage) * 0.55`) and the remaining 45% is driven
-by how far the globe has come into view, so it completes exactly as the globe
-appears. Both halves are monotonic and the handover at `ready` moves forwards;
-`useFullyInView` also clamps `progress` against its own previous value, so
-scrolling back up cannot drain a bar that has already filled.
+Each country is a **spinning wind-turbine rotor**, drawn once per colour into a
+canvas by `createRotorTexture` and used as a sprite.
 
-Do not gate on `intersectionRatio >= 1` alone: an element taller than the
-viewport can never reach it and the loader would sit at 100% forever. The
-threshold is how much of the element *could* be on screen at once
-(`innerHeight / height`), and the observer needs a dense threshold ladder,
-because the trigger point is computed in the callback rather than declared.
+- **A sprite, not a mesh.** Sprites always face the camera, so the rotor reads
+  as a disc wherever it sits. A plane laid on the surface foreshortens towards
+  the limb and collapses to a line edge-on, which is where several markers live.
+- **Turbine blades, not fan wings.** Long and slender, narrow at the root,
+  widest about a third out, tapering to a fine tip, with a rotor disc mostly
+  made of air. Stock "fan" icons are short and broad and read as a desk fan.
+- **`ROTOR_SIZE` is separate from `baseScale`.** `baseScale` is the country's
+  weighting (1 / 1.25 / 1.5) and drives the ring, which is geometry already
+  sized in world units. A sprite's scale *is* its size in world units, so
+  reusing the weighting drew the rotor about 5px across.
+- **`depthTest: false`, and `updateMarkerFacing` compensates.** A sprite is one
+  flat quad with every corner at the same view depth; near the limb the sphere
+  curves in front of the far corners and lops the blades off mid-span. Turning
+  depth testing off draws the rotor whole, which means the depth buffer is no
+  longer hiding far-side markers and the per-frame normal-vs-camera test has to.
+- Rotors spin out of phase at their own rates. In lockstep they read as one
+  animation applied to a row of icons rather than as fourteen turbines. The spin
+  is skipped entirely under `prefers-reduced-motion`.
 
-Country coordinates live in `COUNTRIES` in `src/content/site.ts`. When adding
-one, check its `lat`/`lon` actually falls on a land polygon — otherwise the
-beacon floats over the ocean. (`GlobalReach.tsx` reads the same `COUNTRIES`
-array, so content stays in one place either way.)
+**Markers sit flush on the surface (`GLOBE_RADIUS + 0.9`).** A version on raised
+bars had its head ~17 units off the sphere while the selection ring stayed on
+it; anywhere except dead centre the two separated and the head floated over a
+neighbouring country.
 
-Two gotchas worth remembering if you re-enable it:
+### Framing
 
-- Hand-written shaders write straight to the sRGB framebuffer with no output
-  encode, so their uniform colours must be built with the `srgb()` helper, not
-  `new THREE.Color(hex)` — the latter converts to the linear working space and
-  crushes darks to near-black. Built-in materials do get the encode and use the
-  normal managed path.
-- `applyDots` installs `BufferAttribute`s over the worker's transferred
-  `Float32Array`s. Don't copy them back into plain arrays.
+`frameCamera` sets the sphere's diameter to `FILL` times the frame's **shorter**
+side, so it spans nearly the full height of a wide frame and nearly the full
+width of a portrait one. Anchoring to the shorter side is what keeps the crop
+sane in both orientations with no breakpoint to maintain.
+
+`FILL` is 1.08 — a slight overflow. Two larger values were tried and both looked
+worse in the same way: at 1.2 the limb survived on only one side, so it read as
+a lopsided crop rather than a planet, and at full corner coverage there was no
+horizon on screen at all and it stopped reading as a sphere. **The silhouette is
+what says "globe".**
+
+Zoom is done with **focal length, not camera distance**. Flying the camera in to
+~130 units frames it the same way, but that close the perspective is severe: the
+near face balloons, the limb falls away hard, and the camera ends up almost
+inside the atmosphere shell at radius 118. Holding the distance and narrowing
+the fov is the telephoto equivalent.
+
+The globe shifts left by 0.12 of the frame half-width on wide layouts, to keep
+the focused country clear of the detail card. It was 0.3, which just relocated
+the dead space to the other side and crushed the continents against the edge.
+
+### Selection
+
+`focusCountry` spins the globe so a country faces the camera **and pins it**.
+The pin is what makes it work: without it the idle spin keeps advancing
+`target.y` every frame, so the globe turns towards the country and sails
+straight past it. The flag is internal rather than a call to `setAutoRotate`,
+so the user's own Auto-Spin toggle is not flipped underneath them; dragging or
+enabling Auto-Spin releases it.
+
+The interactive globe **opens with Auto-Spin off**, pinned on the HQ. That is the
+honest state: it used to open spinning while the panel already claimed a
+selection, so by the time you scrolled the globe into view the named country had
+rotated well round the side and the panel and the sphere disagreed.
+
+### Performance
+
+`GlobeMount` gates the `next/dynamic` import behind an `IntersectionObserver`
+with a 500px `rootMargin`, so nothing WebGL happens during page load or
+hydration. This is the biggest win and must stay: bringing up a WebGL context
+costs ~200ms and compiling shaders another ~140ms, both driver-side and
+unavoidable for *any* WebGL renderer. Markers and arcs still build on later
+frames via `defer()` so no single task crosses the 50ms long-task threshold.
+Pixel ratio is capped at 1.5, and glow and rotor textures are memoised per
+colour (14 markers, three colours).
+
+The dot-cloud worker (`globe.worker.ts`, `land-dots.ts`, `land-mask.ts`) was
+deleted with the dot matrix — the photograph carries the geography, so there is
+no point cloud to generate and nothing left needing a second thread. Note the
+cost profile changed with it: **~1.8 MB of imagery to fetch and decode instead
+of ~45ms of CPU**, network-bound rather than main-thread-bound.
+
+**Loading and revealing are two different moments.** The globe starts building
+500px early, but does not *appear* until fully on screen, gated by
+`useFullyInView` in `Globe.tsx`. Without the split the fade ran while half the
+sphere was below the fold. The loader bar is split 55/45 between build and
+scroll: the build stages finish in well under a second while the scroll takes as
+long as the reader takes, so letting the stages span the whole bar made it fill
+instantly and then inch. Do not gate on `intersectionRatio >= 1` alone — an
+element taller than the viewport can never reach it and the loader would hang at
+100% forever.
+
+### Files
+
+- `globe-geo.ts` — lat/lon maths, great-circle arcs, and the canvas-drawn glow
+  and rotor textures.
+- `globe-scene.ts` — the whole WebGL lifecycle in one framework-free class.
+  Auto-pauses via `IntersectionObserver` + `visibilitychange`, honours
+  `prefers-reduced-motion`, tears everything down in `dispose()`.
+- `Globe.tsx` — React wrapper. `variant="hero"` is chrome-free ambient motion;
+  `variant="interactive"` adds the region filter, HUD inspector and country dock.
+- `GlobeMount.tsx` — **always import the globe through this.**
+
+Country coordinates live in `COUNTRIES` in `src/content/site.ts`; `GlobalReach`
+reads the same array, so content stays in one place.
+
+**Hand-written shader uniforms must use the `srgb()` helper**, not
+`new THREE.Color(hex)`. Those shaders write straight to the sRGB framebuffer
+with no output encode, and `new Color()` converts to the linear working space
+and crushes darks to near-black. Built-in materials (MeshBasic, Sprite, Phong)
+do get the encode and use the normal managed path.
 
 ## Gotchas
 
