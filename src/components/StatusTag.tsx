@@ -4,6 +4,7 @@ const styles: Record<Capability['status'], string> = {
   'Current capability': 'bg-green/12 text-forest border-green/30',
   'Current & developing': 'bg-sky/12 text-[#2c6474] border-sky/30',
   'In development': 'bg-leaf/25 text-[#5a6b2a] border-leaf/50',
+  'Core capability': 'bg-navy/8 text-navy border-navy/25',
 }
 
 export function StatusTag({ status }: { status: Capability['status'] }) {
