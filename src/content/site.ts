@@ -557,7 +557,7 @@ export const WHY_IT_MATTERS = [
 
 export type Capability = {
   title: string
-  status: 'Current capability' | 'Current & developing' | 'In development'
+  status: 'Current capability' | 'Current & developing' | 'In development' | 'Core capability'
   body: string
 }
 
@@ -591,7 +591,16 @@ export const INNOVATION_LIST = [
 ]
 
 
-export const CAPABILITY_PILLARS = [
+export type CapabilityPillar = {
+  num: string
+  title: string
+  tagline: string
+  accent: string
+  capabilities: Capability[]
+  deliverable: string
+}
+
+export const CAPABILITY_PILLARS: CapabilityPillar[] = [
   {
     num: '01',
     title: 'Technology Captures',
