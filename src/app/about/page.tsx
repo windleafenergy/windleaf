@@ -16,7 +16,7 @@ export default function AboutPage() {
   return (
     <>
       <PageHero
-        eyebrow="About Windleaf"
+        eyebrow="Who We Are"
         title="Independent Expertise. Wind Blade Manufacturing Experience Across the Globe."
         sub="Built on real-world wind blade experience, Windleaf brings independent technical insight to complex blade challenges."
         bgImg="/how-we-work-engineers-inspection.jpg"
@@ -48,26 +48,26 @@ export default function AboutPage() {
             </SpotlightCard>
           </div>
           <div className="reveal-right">
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-green">
-              Founder
-            </span>
-            <h2 className="mt-3 text-4xl font-semibold sm:text-5xl">K. Muruga Ganesh</h2>
-            <p className="mt-2 font-medium text-charcoal/70">
-              Founder &amp; CEO | Wind Turbine Blade Engineering &amp; Manufacturing Expert
+            <h2 className="text-4xl font-semibold sm:text-5xl">K. Muruga Ganesh</h2>
+            <p className="mt-2 text-base font-semibold text-teal sm:text-lg">
+              Founder &amp; CEO | Wind Turbine Blade Engineering &amp; Manufacturing Specialist
             </p>
+
             <div className="mt-6 space-y-4 text-lg leading-relaxed text-charcoal/75">
-              <p>
-                K. Muruga Ganesh has 17+ years of global wind-energy experience across OEM, IPP and
-                independent engineering environments.
+              <p className="font-semibold text-navy">
+                17 years of global experience in wind turbine blade engineering, manufacturing, quality, and independent technical services.
               </p>
+
               <p>
-                Their career includes blade manufacturing with leading OEMs, independent blade
-                engineering and audits with DNV GL, and owner-side technical work with
-                TotalEnergies.
+                K. Muruga Ganesh has worked across OEM, IPP, and independent engineering environments, providing technical expertise throughout the blade lifecycle — from supplier qualification, manufacturing and quality assurance to inspection, defect assessment, repair, and structural evaluation.
               </p>
+
               <p>
-                That expertise spans blade engineering, manufacturing, quality assurance, technical
-                due diligence, inspection, defect assessment, repair and structural analysis.
+                His experience includes blade manufacturing with leading OEMs, independent engineering and third-party inspection with DNV GL, and owner-side technical expertise with TotalEnergies.
+              </p>
+
+              <p>
+                Today, through Windleaf Energy Solutions, he provides independent engineering consulting and services to Owners, IPPs, Investors, and OEMs, supporting critical blade decisions with practical, evidence-based engineering expertise.
               </p>
             </div>
           </div>
@@ -78,7 +78,7 @@ export default function AboutPage() {
       <Section tone="mist">
         <div className="reveal-up">
           <SectionHeading
-            eyebrow="Professional Experience"
+            eyebrow="Industry Background"
             title="Professional Experience"
             sub="Experience from the manufacturer, owner and independent engineering sides of the wind industry."
           />
@@ -155,7 +155,7 @@ export default function AboutPage() {
       <Section tone="mist">
         <div className="reveal-up">
           <SectionHeading
-            eyebrow="Core Values"
+            eyebrow="What Drives Us"
             title="Our Core Values"
             sub="Committed to technically sound, transparent and evidence-based engineering decisions."
           />

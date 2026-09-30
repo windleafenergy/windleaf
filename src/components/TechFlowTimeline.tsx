@@ -97,128 +97,127 @@ export function TechFlowTimeline({
         />
 
         <ol className="relative flex flex-col gap-0">
-        {TECH_FLOW.map((step, i) => {
-          const isVerify = step.kind === 'verify'
-          const isRight = i % 2 === 0
-          const active = i < activeCount
-          const colour = colours[i] ?? '#00c2a8'
+          {TECH_FLOW.map((step, i) => {
+            const isVerify = step.kind === 'verify'
+            const isRight = i % 2 === 0
+            const active = i < activeCount
+            const colour = colours[i] ?? '#00c2a8'
 
-          // Alternating sides is a wide-screen idea. Below `sm` each column is
-          // only ~155px, which is narrower than the words in it, so the whole
-          // thing becomes one left-aligned column with the spine down the side
-          // — the node first, then the card.
-          return (
-            <li
-              key={step.num}
-              className={`relative flex items-center flex-row ${
-                isRight ? 'sm:flex-row' : 'sm:flex-row-reverse'
-              }`}
-              style={{ minHeight: 152 }}
-            >
-              {/* Card */}
-              <div
-                className={`order-2 w-[calc(100%-5rem)] pl-6 text-left transition-all duration-700 ease-out sm:order-none sm:w-[calc(50%-2.5rem)] ${
-                  isRight ? 'sm:pl-0 sm:pr-6 sm:text-right' : 'sm:pl-6 sm:text-left'
-                }`}
-                style={{
-                  opacity: active ? 1 : 0,
-                  // Vertical only. A horizontal offset here used to push the
-                  // card past the right edge on a phone — which is where the
-                  // page's stray horizontal scrollbar came from.
-                  transform: active ? 'translateY(0)' : 'translateY(10px)',
-                }}
+            // Alternating sides is a wide-screen idea. Below `sm` each column is
+            // only ~155px, which is narrower than the words in it, so the whole
+            // thing becomes one left-aligned column with the spine down the side
+            // — the node first, then the card.
+            return (
+              <li
+                key={step.num}
+                className={`relative flex items-center flex-row ${isRight ? 'sm:flex-row' : 'sm:flex-row-reverse'
+                  }`}
+                style={{ minHeight: 152 }}
               >
-                {/* The step number sits inside the card as a small eyebrow.
+                {/* Card */}
+                <div
+                  className={`order-2 w-[calc(100%-5rem)] pl-6 text-left transition-all duration-700 ease-out sm:order-none sm:w-[calc(50%-2.5rem)] ${isRight ? 'sm:pl-0 sm:pr-6 sm:text-right' : 'sm:pl-6 sm:text-left'
+                    }`}
+                  style={{
+                    opacity: active ? 1 : 0,
+                    // Vertical only. A horizontal offset here used to push the
+                    // card past the right edge on a phone — which is where the
+                    // page's stray horizontal scrollbar came from.
+                    transform: active ? 'translateY(0)' : 'translateY(10px)',
+                  }}
+                >
+                  {/* The step number sits inside the card as a small eyebrow.
                     As an oversized watermark it outweighed the titles — "01"
                     read louder than "Blade". */}
-                <div
-                  className={`inline-block max-w-[19rem] rounded-2xl border bg-white px-6 py-5 transition-all duration-500 ${
-                    active
-                      ? isVerify
-                        ? 'border-navy/15 shadow-lg shadow-navy/10'
-                        : 'border-teal/25 shadow-lg shadow-teal/10'
-                      : 'border-hairline shadow-sm'
-                  }`}
-                >
                   <div
-                    className={`flex items-center gap-2 ${isRight ? 'justify-end' : 'justify-start'}`}
+                    className={`inline-block max-w-[19rem] rounded-2xl border bg-white px-6 py-5 transition-all duration-500 ${active
+                        ? isVerify
+                          ? 'border-navy/15 shadow-lg shadow-navy/10'
+                          : 'border-teal/25 shadow-lg shadow-teal/10'
+                        : 'border-hairline shadow-sm'
+                      }`}
                   >
-                    {!isRight && (
-                      <span
-                        className="h-px w-5 transition-colors duration-500"
-                        style={{ backgroundColor: active ? colour : '#d3dbe0' }}
-                      />
-                    )}
-                    <span
-                      className="font-display text-[11px] font-bold tracking-[0.22em] transition-colors duration-500"
-                      style={{ color: active ? colour : 'rgba(38,52,58,0.35)' }}
+                    <div
+                      className={`flex items-center gap-2 ${isRight ? 'justify-end' : 'justify-start'}`}
                     >
-                      {step.num}
-                    </span>
-                    {isRight && (
+                      {!isRight && (
+                        <span
+                          className="h-px w-5 transition-colors duration-500"
+                          style={{ backgroundColor: active ? colour : '#d3dbe0' }}
+                        />
+                      )}
                       <span
-                        className="h-px w-5 transition-colors duration-500"
-                        style={{ backgroundColor: active ? colour : '#d3dbe0' }}
-                      />
-                    )}
+                        className="font-display text-[11px] font-bold tracking-[0.22em] transition-colors duration-500"
+                        style={{ color: active ? colour : 'rgba(38,52,58,0.35)' }}
+                      >
+                        {step.num}
+                      </span>
+                      {isRight && (
+                        <span
+                          className="h-px w-5 transition-colors duration-500"
+                          style={{ backgroundColor: active ? colour : '#d3dbe0' }}
+                        />
+                      )}
+                    </div>
+
+                    <p className="mt-2.5 font-display text-lg font-semibold leading-snug text-navy">
+                      {step.title}
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-charcoal/60">{step.body}</p>
                   </div>
-
-                  <p className="mt-2.5 font-display text-lg font-semibold leading-snug text-navy">
-                    {step.title}
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-charcoal/60">{step.body}</p>
                 </div>
-              </div>
 
-              {/* Centre node */}
-              <div className="order-1 relative z-10 flex h-20 w-20 shrink-0 items-center justify-center sm:order-none">
-                {/* Opaque disc so the dotted thread stops cleanly at the node
+                {/* Centre node */}
+                <div className="order-1 relative z-10 flex h-20 w-20 shrink-0 items-center justify-center sm:order-none">
+                  {/* Opaque disc so the dotted thread stops cleanly at the node
                     instead of running right up against the icon. */}
-                <span
-                  aria-hidden="true"
-                  className="absolute h-[70px] w-[70px] rounded-full bg-white"
-                />
-                {/* Halo pulses only for the step the line has just reached */}
-                <span
-                  aria-hidden="true"
-                  className={`absolute h-14 w-14 rounded-full transition-all duration-500 ${
-                    active && i === activeCount - 1 ? 'animate-ping' : 'scale-50'
-                  }`}
-                  style={{
-                    backgroundColor: active && i === activeCount - 1 ? `${colour}4d` : 'transparent',
-                  }}
-                />
-                <div
-                  className={`flex h-14 w-14 items-center justify-center rounded-full transition-all duration-500 ${
-                    active ? 'scale-100 text-white' : 'scale-90 bg-white text-charcoal/25'
-                  }`}
-                  style={
-                    active
-                      ? { backgroundColor: colour, boxShadow: `0 0 0 4px ${colour}33` }
-                      : { boxShadow: '0 0 0 4px #e5e7eb' }
-                  }
-                >
-                  {icons[step.num]}
+                  <span
+                    aria-hidden="true"
+                    className="absolute h-[70px] w-[70px] rounded-full bg-white"
+                  />
+                  {/* Halo pulses only for the step the line has just reached */}
+                  <span
+                    aria-hidden="true"
+                    className={`absolute h-14 w-14 rounded-full transition-all duration-500 ${active && i === activeCount - 1 ? 'animate-ping' : 'scale-50'
+                      }`}
+                    style={{
+                      backgroundColor: active && i === activeCount - 1 ? `${colour}4d` : 'transparent',
+                    }}
+                  />
+                  <div
+                    className={`flex h-14 w-14 items-center justify-center rounded-full transition-all duration-500 ${active ? 'scale-100 text-white' : 'scale-90 bg-white text-charcoal/25'
+                      }`}
+                    style={
+                      active
+                        ? { backgroundColor: colour, boxShadow: `0 0 0 4px ${colour}33` }
+                        : { boxShadow: '0 0 0 4px #e5e7eb' }
+                    }
+                  >
+                    {icons[step.num]}
+                  </div>
                 </div>
-              </div>
 
-              <div className="hidden w-[calc(50%-2.5rem)] sm:block" />
-            </li>
-          )
-        })}
+                <div className="hidden w-[calc(50%-2.5rem)] sm:block" />
+              </li>
+            )
+          })}
         </ol>
       </div>
 
       {/* Phase legend — outside the spine wrapper, so the line stops at the
           last milestone instead of running down between these pills. */}
-      <div className="mt-10 flex flex-wrap justify-center gap-4">
+      <div className="mt-10 flex flex-wrap justify-center gap-3 sm:gap-4">
         <span className="inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/8 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-teal">
           <span className="h-2 w-2 rounded-full bg-teal" />
-          Technology captures &amp; analyses
+          Technology captures
+        </span>
+        <span className="inline-flex items-center gap-2 rounded-full border border-leaf/30 bg-leaf/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-leaf">
+          <span className="h-2 w-2 rounded-full bg-leaf" />
+          Engineering interprets
         </span>
         <span className="inline-flex items-center gap-2 rounded-full border border-navy/20 bg-navy/6 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-navy">
           <span className="h-2 w-2 rounded-full bg-navy" />
-          Engineers verify &amp; decide
+          Windleaf delivers
         </span>
       </div>
     </div>

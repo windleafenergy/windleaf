@@ -113,13 +113,13 @@ export function SectionHeading({
   light = false,
 }: {
   eyebrow?: string
-  title: string
+  title: ReactNode
   sub?: string
   align?: 'left' | 'center'
   light?: boolean
 }) {
   return (
-    <div className={`${align === 'center' ? 'mx-auto max-w-2xl text-center' : 'max-w-3xl'}`}>
+    <div className={`${align === 'center' ? 'mx-auto max-w-2xl text-center' : 'max-w-3.5xl'}`}>
       {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
       <h2
         className={`mt-4 text-4xl font-semibold text-balance sm:text-5xl md:text-[52px] md:leading-[1.06] ${

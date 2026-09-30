@@ -25,7 +25,7 @@ export function GlobalReach() {
         {[
           { value: String(COUNTRY_COUNT), label: 'Countries of project experience' },
           { value: String(REGION_COUNT), label: 'Regions covered' },
-          { value: '2', label: 'Strategic hubs — Singapore HQ · Denmark alliance' },
+          { value: '2', label: 'Strategic hubs — India HQ · Global partnerships' },
         ].map((stat) => (
           <div key={stat.label} className="bg-white px-6 py-7 text-center">
             <div className="font-display text-4xl font-bold text-green">
@@ -58,13 +58,12 @@ export function GlobalReach() {
                   spotlightColor={
                     country.isHq ? 'rgba(255, 193, 7, 0.16)' : 'rgba(0, 194, 168, 0.15)'
                   }
-                  className={`reveal-up flex h-full flex-col rounded-2xl border p-6 ${
-                    country.isHq
+                  className={`reveal-up flex h-full flex-col rounded-2xl border p-6 ${country.isHq
                       ? 'border-sun/45 bg-sun/[0.06]'
                       : country.isAlliance
                         ? 'border-teal/45 bg-teal/[0.05]'
                         : 'border-hairline bg-white'
-                  }`}
+                    }`}
                   style={stagger(i % 3)}
                 >
                   <div className="flex items-start justify-between gap-3">

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 /**
  * Counts a stat up from zero the first time it scrolls into view.
  *
- * Accepts the display string straight from content (`"17+"`, `"11"`), so any
+ * Accepts the display string straight from content (`"17"`, `"11"`), so any
  * prefix/suffix is preserved and only the numeric part animates.
  *
  * **The real number is the resting state, and zero is only ever a frame of an

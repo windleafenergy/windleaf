@@ -13,7 +13,7 @@ export default function HowWeWorkPage() {
   return (
     <>
       <PageHero
-        eyebrow="How We Work"
+        eyebrow="Our Approach"
         title="How We Work"
         sub="A clear, evidence-based process and flexible ways to engage — whatever the size of your blade challenge."
         bgImg="/about-engineer-wind-farm.jpg"
@@ -22,7 +22,7 @@ export default function HowWeWorkPage() {
       {/* How a Project Works */}
       <Section tone="white">
         <div className="reveal-up">
-          <SectionHeading eyebrow="How a Project Works" title="How a Project Works" />
+          <SectionHeading eyebrow="Our Process" title="How a Project Works" />
         </div>
         <div className="mt-12 grid gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
           {PROCESS.map((step, i) => (
@@ -45,7 +45,7 @@ export default function HowWeWorkPage() {
       <Section tone="mist">
         <div className="reveal-up">
           <SectionHeading
-            eyebrow="Ways to Work With Windleaf"
+            eyebrow="Flexible Engagement"
             title="Ways to Work With Windleaf"
             sub="Choose the level of support that fits your project."
           />
@@ -81,7 +81,7 @@ export default function HowWeWorkPage() {
       {/* Why Choose Windleaf (short) */}
       <Section tone="white">
         <div className="reveal-up">
-          <SectionHeading eyebrow="Why Choose Windleaf" title="Why Choose Windleaf?" />
+          <SectionHeading eyebrow="The Windleaf Advantage" title="Why Choose Windleaf?" />
         </div>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {SIX_REASONS.map((reason, i) => (
@@ -103,7 +103,7 @@ export default function HowWeWorkPage() {
       </Section>
 
       <ClosingCTA
-        eyebrow="Closing"
+        eyebrow="Next Steps"
         title="Have a Blade Challenge?"
         text="Share the details and start the conversation with Windleaf."
         buttonLabel="Contact Windleaf"

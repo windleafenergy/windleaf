@@ -20,8 +20,8 @@ export const HERO_VIDEO: string | null = '/hero.mp4'
 export const EVENT = {
   heading: 'Meet Windleaf at Windergy India 2026',
   text: 'Visit us to discuss blade engineering, inspection and our technology initiatives.',
-  details: '[Event dates] · [Venue] · [Stand number]',
-  strip: 'Windergy India 2026 — [Event dates] · [Venue] · [Stand number]',
+  details: 'October 7–9, 2026 · Chennai Trade centre, Nandambakkam · Hall 2, S3',
+  strip: 'Windergy India 2026 — October 7–9, 2026 · Chennai Trade centre, Nandambakkam · Hall 2, S3',
 }
 
 // NOTE: STATS and SIX_REASONS are defined further down, after COUNTRIES, so
@@ -30,30 +30,30 @@ export const EVENT = {
 export const EXPERIENCE = [
   {
     title: 'OEM & Manufacturing Experience',
-    body: 'Vestas · TPI Composites · Nordex · Suzlon · WinWind',
+    body: 'Suzlon · Vestas · Nordex · Goldwind · GE · Siemens Gamesa · RE Technologies · Envision',
   },
   {
     title: 'Independent Engineering Experience',
-    body: 'DNV GL — Blade Engineering, Inspection & Manufacturing Audits',
+    body: 'DNV GL — Blade Engineering and quality, Inspection & Manufacturing Audits',
   },
   {
-    title: 'IPP (Owner-Side) Experience',
-    body: 'TotalEnergies — Technical Due Diligence, Manufacturing Surveillance, Process Audits & Blade Inspection',
+    title: 'IPP Experience',
+    body: 'TotalEnergies acts as a massive Independent Power Producer (IPP), though it is officially classified as a global integrated multi-energy company',
   },
 ]
 
 export const WHAT_WE_DO = [
   {
-    title: 'Blade Engineering & Consulting',
-    body: 'Blade design review, structural assessment, repair and failure analysis, and independent advice on complex blade issues.',
+    title: 'Blade Engineering',
+    body: 'comprehensive control of materials, manufacturing processes, composite laminates, bonding, dimensions, visual condition, NDT, repairs, documentation, traceability, and final inspection to ensure every component consistently meets specified quality, safety, reliability, and customer requirements.',
   },
   {
     title: 'Quality, Inspection & Assurance',
-    body: 'Manufacturing quality, process audits, surveillance, and visual & NDT blade inspection with clear defect assessment.',
+    body: 'Quality, Inspection & Assurance encompasses comprehensive control of materials, manufacturing processes, composite laminates, bonding, dimensions, visual condition, NDT, repairs, documentation, traceability, and final inspection to ensure every component consistently meets specified quality, safety, reliability, and customer requirements.',
   },
   {
     title: 'Technical Due Diligence & Advisory',
-    body: 'Blade condition and risk assessment, documentation and repair history review, and independent recommendations for wind assets.',
+    body: 'Technical Due Diligence (TDD) provides an independent assessment of wind turbine blades, covering design, condition, defects, repairs, structural integrity, performance, remaining life, and technical risks to support informed investment and asset-management decisions.',
   },
 ]
 
@@ -61,38 +61,38 @@ export const WHAT_WE_DO = [
 export const TECH_FLOW = [
   {
     num: '01',
-    title: 'Blade',
-    body: 'At any stage, from manufacturing to the wind farm',
+    title: 'Wind Turbine Blade',
+    body: 'Operational wind assets & manufacturing lifecycle',
     kind: 'capture' as const,
   },
   {
     num: '02',
-    title: 'Camera / Robot',
-    body: 'Advanced cameras and robotics capture images and inspection data',
+    title: 'Inspection & Data',
+    body: 'Visual • NDT • Robotics • Field Data',
     kind: 'capture' as const,
   },
   {
     num: '03',
-    title: 'Data',
-    body: 'Images, inspection and manufacturing data organised for review',
+    title: 'Engineering Analysis',
+    body: 'Structural • Manufacturing • Quality • Defects',
     kind: 'capture' as const,
   },
   {
     num: '04',
-    title: 'AI',
-    body: 'AI-assisted analysis flags potential defects, anomalies and patterns',
+    title: 'Technical Assessment',
+    body: 'Risk • Root Cause • Integrity • Performance',
     kind: 'capture' as const,
   },
   {
     num: '05',
-    title: 'Windleaf Engineer',
-    body: 'Engineers verify every finding against requirements and evidence',
+    title: 'Windleaf Engineering',
+    body: 'Independent Engineering Judgement',
     kind: 'verify' as const,
   },
   {
     num: '06',
     title: 'Engineering Solution',
-    body: 'Practical recommendations and solutions you can act on',
+    body: 'Repair • Corrective Action • Life Extension • Recommendation',
     kind: 'verify' as const,
   },
 ]
@@ -115,16 +115,46 @@ export type Country = {
 
 export const COUNTRIES: Country[] = [
   {
+    name: 'India',
+    lat: 13.0827,
+    lon: 80.2707,
+    isHq: true,
+    flag: '🇮🇳',
+    region: 'Asia-Pacific',
+    hubType: 'Global Headquarters',
+    services: ['TDD', 'Factory Qualification'],
+    detail:
+      'Technical due diligence and blade factory qualification for utility-scale wind development, including manufacturing readiness and supply-chain capability.',
+  },
+  {
+    name: 'China',
+    lat: 35.8617,
+    lon: 104.1954,
+    flag: '🇨🇳',
+    region: 'Asia-Pacific',
+    services: ['Factory Qualification', 'Manufacturing Surveillance', 'NPI'],
+    detail:
+      'Factory qualification, on-site manufacturing surveillance and new product introduction at tier-1 OEM export facilities.',
+  },
+  {
     name: 'Singapore',
     lat: 1.3521,
     lon: 103.8198,
     flag: '🇸🇬',
     region: 'Asia-Pacific',
-    isHq: true,
-    hubType: 'Global Headquarters',
     services: ['Vendor Development', 'Materials'],
     detail:
       'Global headquarters — vendor development, materials engineering and the technical strategy directing blade consultancy across APAC and worldwide.',
+  },
+  {
+    name: 'Australia',
+    lat: -25.2744,
+    lon: 133.7751,
+    flag: '🇦🇺',
+    region: 'Asia-Pacific',
+    services: ['Blade Project', 'Quality Assurance'],
+    detail:
+      'Blade project delivery and quality assurance for wind farms across Australian sites, from receipt inspection to pre-commissioning.',
   },
   {
     name: 'Denmark',
@@ -132,21 +162,9 @@ export const COUNTRIES: Country[] = [
     lon: 9.5018,
     flag: '🇩🇰',
     region: 'Europe',
-    isAlliance: true,
-    hubType: 'Engineering Alliance',
     services: ['Global Engineering', 'Training'],
     detail:
-      'Global blade engineering and technical training through our dedicated alliance with Apex Wind Denmark, covering aerodynamic design and structural verification.',
-  },
-  {
-    name: 'Germany',
-    lat: 51.1657,
-    lon: 10.4515,
-    flag: '🇩🇪',
-    region: 'Europe',
-    services: ['OEM', 'Inspection', 'Engineering'],
-    detail:
-      'OEM-side engineering, blade inspection and process support at primary European blade production sites.',
+      'Global blade engineering and technical training through our dedicated alliance with European Designers, covering aerodynamic design and structural verification.',
   },
   {
     name: 'UK',
@@ -158,6 +176,17 @@ export const COUNTRIES: Country[] = [
     detail:
       'Composite blade repair engineering and technical training for offshore and onshore operators across the UK fleet.',
   },
+  {
+    name: 'Germany',
+    lat: 51.1657,
+    lon: 10.4515,
+    flag: '🇩🇪',
+    region: 'Europe',
+    services: ['OEM', 'Inspection', 'Engineering'],
+    detail:
+      'OEM-side engineering, blade inspection and process support at primary European blade production sites.',
+  },
+
   {
     name: 'Spain',
     lat: 40.4637,
@@ -179,7 +208,7 @@ export const COUNTRIES: Country[] = [
       'Independent process and product audits of blade manufacturing lines and finished product against technical specification.',
   },
   {
-    name: 'Turkey',
+    name: 'Türkiye',
     lat: 38.9637,
     lon: 35.2433,
     flag: '🇹🇷',
@@ -189,34 +218,16 @@ export const COUNTRIES: Country[] = [
       'Quality engineering, team training and new-product launch support at major blade manufacturing and sub-component facilities.',
   },
   {
-    name: 'Kazakhstan',
-    lat: 48.0196,
-    lon: 66.9237,
-    flag: '🇰🇿',
-    region: 'Asia-Pacific',
+    name: 'Canada',
+    lat: 56.1304,
+    lon: -106.3468,
+    isHq: false,
+    flag: '🇨🇦',
+    region: 'Americas',
+    hubType: 'Regional Operations',
     services: ['TDD', 'Factory Qualification'],
     detail:
       'Technical due diligence and blade factory qualification for utility-scale wind development, including manufacturing readiness and supply-chain capability.',
-  },
-  {
-    name: 'China',
-    lat: 35.8617,
-    lon: 104.1954,
-    flag: '🇨🇳',
-    region: 'Asia-Pacific',
-    services: ['Factory Qualification', 'Manufacturing Surveillance', 'NPI'],
-    detail:
-      'Factory qualification, on-site manufacturing surveillance and new product introduction at tier-1 OEM export facilities.',
-  },
-  {
-    name: 'Australia',
-    lat: -25.2744,
-    lon: 133.7751,
-    flag: '🇦🇺',
-    region: 'Asia-Pacific',
-    services: ['Blade Project', 'Quality Assurance'],
-    detail:
-      'Blade project delivery and quality assurance for wind farms across Australian sites, from receipt inspection to pre-commissioning.',
   },
   {
     name: 'USA',
@@ -238,16 +249,7 @@ export const COUNTRIES: Country[] = [
     detail:
       'Quality engineering, workforce training and product launch support for North American export blade manufacturing lines.',
   },
-  {
-    name: 'South Africa',
-    lat: -30.5595,
-    lon: 22.9375,
-    flag: '🇿🇦',
-    region: 'Middle East & Africa',
-    services: ['Project Support'],
-    detail:
-      'Blade project support for IPPs and utility-scale developments, including post-transportation inspection and pre-commissioning verification.',
-  },
+
   {
     name: 'Oman',
     lat: 21.4735,
@@ -258,6 +260,18 @@ export const COUNTRIES: Country[] = [
     detail:
       'Wind turbine generator project support in extreme desert conditions, covering blade inspection, erosion analysis and repair engineering.',
   },
+  {
+    name: 'South Africa',
+    lat: -30.5595,
+    lon: 22.9375,
+    flag: '🇿🇦',
+    region: 'Middle East & Africa',
+    services: ['Project Support'],
+    detail:
+      'Blade project support for IPPs and utility-scale developments, including post-transportation inspection and pre-commissioning verification.',
+  },
+
+
 ]
 
 /**
@@ -283,28 +297,28 @@ export const VALUES = [
 ]
 
 export const PROCESS = [
-  { num: '01', title: 'Understand', body: 'We start by understanding your blade challenge and objectives.' },
+  { num: '01', title: 'Understand', body: 'We understand your blade, project context, technical challenge and objectives.' },
   {
     num: '02',
     title: 'Review',
-    body: 'We review available drawings, reports, inspection data, photographs and technical records.',
+    body: 'We review drawings, specifications, reports, inspection data, photographs and available technical records.',
   },
-  { num: '03', title: 'Assess', body: 'We apply specialist blade engineering expertise and technical analysis.' },
+  { num: '03', title: 'Assess', body: 'We apply specialist blade engineering expertise to assess the condition, defect, process or technical issue.' },
   {
     num: '04',
-    title: 'Verify',
-    body: 'We validate findings through evidence, engineering requirements and stakeholder discussions.',
+    title: 'Investigate',
+    body: 'We examine evidence, technical requirements and relevant engineering criteria to establish the underlying issue and risk.',
   },
-  { num: '05', title: 'Recommend', body: 'We deliver clear findings, conclusions and recommendations.' },
-  { num: '06', title: 'Solutions', body: 'We turn those findings into practical engineering solutions you can act on.' },
+  { num: '05', title: 'Verify', body: 'We validate findings through technical evidence, engineering analysis and stakeholder discussions.' },
+  { num: '06', title: 'Deliver', body: 'We provide clear conclusions and practical engineering recommendations that can be implemented.' },
 ]
 
 export const WAYS_TO_WORK = [
-  { title: 'Single Assignment', body: 'For a specific technical question or blade issue.' },
-  { title: 'Project Support', body: 'Specialist blade expertise throughout a defined project.' },
+  { title: 'Technical Assignment', body: 'Specific blade engineering question, assessment or technical issue.' },
+  { title: 'Project Support', body: 'Specialist blade engineering support throughout a defined project.' },
   {
     title: 'Long-Term Technical Partnership',
-    body: 'Ongoing blade engineering support for owners, IPPs, OEMs and engineering organisations.',
+    body: 'Ongoing independent blade engineering support for Owners, IPPs, OEMs and engineering organisations.',
   },
 ]
 
@@ -325,8 +339,8 @@ export const SERVICES: Service[] = [
     id: 'design-engineering',
     n: 'Service 1',
     title: 'Design & Engineering',
-    sub: 'Specialist blade engineering, strengthened through our collaboration with Apex Wind Denmark.',
-    text: 'Windleaf provides specialist blade engineering expertise, complemented by design and advanced engineering capabilities through our collaboration with Apex Wind Denmark.',
+    sub: 'Specialist blade engineering, strengthened through our collaboration with European Designers.',
+    text: 'Windleaf provides specialist blade engineering expertise, complemented by design and advanced engineering capabilities through our collaboration with European Designers.',
     list: [
       'New blade design and development',
       'Blade design review and optimisation',
@@ -338,7 +352,7 @@ export const SERVICES: Service[] = [
       'Engineering evaluation of existing blade designs',
     ],
     experience:
-      'Blade engineering experience with DNV GL, plus design and advanced engineering capabilities through Apex Wind Denmark.',
+      'Blade engineering experience with DNV GL, plus design and advanced engineering capabilities through European Designers.',
     cta: 'Discuss a Design Project',
   },
   {
@@ -357,7 +371,7 @@ export const SERVICES: Service[] = [
       'Manufacturing surveillance',
     ],
     experience:
-      'Blade manufacturing experience with Vestas, TPI Composites, Nordex, Suzlon and WinWind; manufacturing audits with DNV GL; manufacturing surveillance and process audits with TotalEnergies.',
+      'Blade manufacturing experience with Vestas,  Nordex, Suzlon and WinWind; manufacturing audits with DNV GL; manufacturing surveillance and process audits with TotalEnergies.',
     cta: 'Discuss Your Requirement',
   },
   {
@@ -571,9 +585,70 @@ export const CAPABILITIES: Capability[] = [
 ]
 
 export const INNOVATION_LIST = [
-  'AI-based structural defect detection',
-  'Robotic internal blade inspection',
-  'Bonding effectiveness assessment',
+  'AI-based structural defect detection & pattern screening',
+  'Robotic internal crawler inspection for confined blade cavities',
+  'Ultrasonic & non-destructive bonding effectiveness assessment',
+]
+
+
+export const CAPABILITY_PILLARS = [
+  {
+    num: '01',
+    title: 'Technology Captures',
+    tagline: 'Sub-millimeter optical capture, robotic mobility and non-destructive testing.',
+    accent: 'teal',
+    capabilities: [
+      {
+        title: 'Camera & Drone Inspection Support',
+        status: 'Current capability',
+        body: 'High-resolution visual and NDT blade inspection supported by robotic cameras and drones, providing complete surface defect records.',
+      },
+      {
+        title: 'Robotic Internal Crawlers & Bondline Assessment',
+        status: 'In development',
+        body: 'Advancing crawling robotic solutions to access internal blade cavities, evaluate shear-web bonding integrity, and detect concealed defects.',
+      },
+    ],
+    deliverable: 'High-fidelity structural records & multi-spectral defect imagery',
+  },
+  {
+    num: '02',
+    title: 'Engineering Interprets',
+    tagline: 'AI-assisted data triage paired with rigorous independent engineering analysis.',
+    accent: 'leaf',
+    capabilities: [
+      {
+        title: 'AI & Inspection Data Analytics',
+        status: 'Current & developing',
+        body: 'Intelligent computer-vision algorithms to rapidly process thousands of inspection images, identifying defect clusters and erosion trends.',
+      },
+      {
+        title: 'Root Cause & Structural Integrity Assessment',
+        status: 'Core capability',
+        body: 'Senior blade engineers evaluate laminate stress, manufacturing variances, and defect severity against international design standards.',
+      },
+    ],
+    deliverable: 'Independent root-cause analysis & engineering risk classifications',
+  },
+  {
+    num: '03',
+    title: 'Windleaf Delivers',
+    tagline: 'Definitive engineering recommendations and practical lifecycle solutions.',
+    accent: 'navy',
+    capabilities: [
+      {
+        title: 'Engineered Repair Procedures & Quality Assurance',
+        status: 'Core capability',
+        body: 'Custom laminate repair specifications, composite patch designs, and third-party manufacturing surveillance to ensure flawless execution.',
+      },
+      {
+        title: 'Life Extension Advisory & Technical Due Diligence',
+        status: 'Core capability',
+        body: 'Actionable remnant-life assessments, fleet-wide risk mitigation, and objective technical recommendations for asset owners and IPPs.',
+      },
+    ],
+    deliverable: 'Executable repair schemes, technical due diligence & extended asset life',
+  },
 ]
 
 export const FORM_FIELDS = [
@@ -664,7 +739,7 @@ export const SEO = {
   about: {
     title: 'About Windleaf | Independent Wind Blade Engineering Expertise',
     description:
-      'Founded by K. Muruga Ganesh, Windleaf brings 17+ years of wind-energy experience across OEM, IPP and independent engineering, including DNV GL.',
+      'Founded by K. Muruga Ganesh, Windleaf brings 17 years of wind-energy experience across OEM, IPP and independent engineering, including DNV GL.',
   },
   services: {
     title: 'Wind Turbine Blade Engineering Services | Windleaf',
@@ -689,23 +764,23 @@ export const SEO = {
 }
 
 export const STATS = [
-  { value: '17+', label: 'Years of global wind-energy experience' },
+  { value: '17', label: 'Years of global wind-energy experience' },
   { value: String(COUNTRY_COUNT), label: 'Countries of project experience' },
-  { value: String(SERVICES.length), label: 'Specialist blade services' },
+  { value: '10', label: 'Globally Delivered: 3 IPP & 7 OEM' },
 ]
 
 export const SIX_REASONS = [
   {
-    title: 'Proven Blade Engineering Expertise',
+    title: 'Decades of Blade Engineering Experience',
     body: 'Hands-on expertise across blade engineering, manufacturing, quality, inspection, defects and repair.',
   },
   {
-    title: '17+ Years of Global Wind-Energy Experience',
+    title: '17 Years of Global Wind-Energy Experience',
     body: `Wind project experience across ${COUNTRY_COUNT} countries.`,
   },
   {
-    title: 'OEM + IPP Perspective',
-    body: 'Experience with blade manufacturers — Vestas, TPI Composites, Nordex, Suzlon and WinWind — and on the owner side with TotalEnergies. We understand both sides of a blade decision.',
+    title: 'OEM & IPP Perspective',
+    body: 'Experience with blade manufacturers — Suzlon · Vestas · Nordex · Goldwind · GE · Siemens Gamesa · RE Technologies · Envision — and on the owner side with TotalEnergies. We understand both sides of a blade decision.',
   },
   {
     title: 'Independent Technical Judgement',
@@ -713,7 +788,7 @@ export const SIX_REASONS = [
   },
   {
     title: 'Global Experience & Technical Collaboration',
-    body: 'International project exposure, with design and advanced engineering capabilities through our collaboration with Apex Wind Denmark.',
+    body: 'International project exposure, with design and advanced engineering capabilities through our collaboration with European Designers.',
   },
   {
     title: 'Technology-Enabled Solutions',
@@ -721,7 +796,7 @@ export const SIX_REASONS = [
   },
 ]
 
-export const FORM_COUNTRIES  = [
+export const FORM_COUNTRIES = [
   'Afghanistan',
   'Albania',
   'Algeria',

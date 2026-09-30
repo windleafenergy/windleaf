@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 }
 
 const CONTACT_DETAILS = [
-  { label: 'Email', value: 'info@windleaf.com' },
-  { label: 'Phone / WhatsApp', value: '+91 9XXX927372' },
+  { label: 'Email', value: 'mg@windleafenergy.com' },
+  { label: 'Phone / WhatsApp', value: '+91 7904724895' },
   { label: 'Address', value: 'XYZ, India-61XX05' },
 ]
 
@@ -51,7 +51,7 @@ export default function ContactPage() {
             <div className="reveal-up mt-6 rounded-2xl border border-hairline bg-navy p-8 text-white" style={stagger(1)}>
               <h3 className="text-lg font-semibold !text-white">Independent Blade Engineering</h3>
               <p className="mt-2 text-sm text-white/70">
-                17+ years across OEM, IPP and independent engineering, with project experience in{' '}
+                17 years across OEM, IPP and independent engineering, with project experience in{' '}
                 {COUNTRY_COUNT} countries.
               </p>
             </div>

@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 const PROJECT_EXAMPLES = [
   [
     { field: 'Client type', value: 'IPP / Energy Developer' },
-    { field: 'Country', value: 'Kazakhstan' },
+    { field: 'Country', value: 'China' },
     { field: 'Service', value: 'Technical Due Diligence (TDD) & Blade Factory Qualification' },
     {
       field: 'The challenge',
@@ -60,7 +60,7 @@ export default function ServicesPage() {
   return (
     <>
       <PageHero
-        eyebrow="Services"
+        eyebrow="Lifecycle Expertise"
         title="Blade Engineering Services Across the Lifecycle"
         sub="Independent, specialist support for Wind Farm Owners, IPPs, Investors and OEMs — from design and manufacturing to inspection, repair and training."
         bgImg="/services-wind-farm-sunset.jpg"
@@ -78,15 +78,13 @@ export default function ServicesPage() {
       <Section tone="white" id="work">
         <div className="reveal-up">
           <SectionHeading
-            eyebrow="Our Work in Practice"
+            eyebrow="Field Experience"
             title="Our Work in Practice"
-            sub={`Hands-on blade work on manufacturing floors, wind projects and inspections across ${COUNTRY_COUNT} countries.`}
+            sub={`Hands-on blade engineering experience across manufacturing facilities, wind projects and field inspections in ${COUNTRY_COUNT} countries.`}
           />
         </div>
         <p className="reveal-up mt-6 max-w-3xl text-lg leading-relaxed text-charcoal/75">
-          Over 17+ years, our work has covered blade manufacturing, training, project delivery,
-          technical due diligence, process and manufacturing audits, surveillance, blade inspection,
-          repair analysis and technical knowledge transfer.
+          Across 17 years, our work has covered blade manufacturing, technical training, project delivery, technical due diligence, process and manufacturing audits, manufacturing surveillance, blade inspection, repair analysis and technical knowledge transfer.
         </p>
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -226,7 +224,7 @@ export default function ServicesPage() {
       ))}
 
       <ClosingCTA
-        eyebrow="Closing"
+        eyebrow="Expert Guidance"
         title="Not Sure Which Service You Need?"
         text="Tell us about your blade challenge and we will help you find the right support."
         buttonLabel="Start the Conversation"

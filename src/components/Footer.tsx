@@ -68,8 +68,8 @@ export function Footer() {
             Get in Touch
           </h4>
           <ul className="mt-4 space-y-2.5 text-sm text-white/70">
-            <li>Email: info@windleaf.com</li>
-            <li>Phone / WhatsApp: +91 9XXX927372</li>
+            <li>Email: mg@windleafenergy.com</li>
+            <li>Phone / WhatsApp: +91 7904724895</li>
             <li>Address: XYZ, India-61XX05</li>
           </ul>
           <Link
@@ -84,7 +84,7 @@ export function Footer() {
       <div className="border-t border-white/10">
         <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-2 px-6 py-6 text-xs text-white/50 sm:flex-row lg:px-10">
           <p>© {new Date().getFullYear()} Windleaf Energy Solutions. All rights reserved.</p>
-          <p>Independent Blade Engineering · OEM + IPP Perspective</p>
+          <p>Independent Blade Engineering · OEM & IPP Perspective</p>
         </div>
       </div>
     </footer>

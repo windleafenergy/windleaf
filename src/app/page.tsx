@@ -36,7 +36,7 @@ export default function HomePage() {
               src="/hero-poster.jpg"
               alt=""
               fill
-              
+
               priority
               sizes="100vw"
               className="object-cover"
@@ -60,14 +60,13 @@ export default function HomePage() {
               className="enter-up mt-5 text-4xl font-semibold leading-[1.06] text-balance !text-white sm:text-5xl md:text-6xl"
               style={{ animationDelay: '60ms' }}
             >
-              Global Independent Engineering Consulting &amp; Services for Wind Turbine Blades
+              Global Independent Engineering Consulting &amp; Services
             </h1>
             <p
               className="enter-up mt-6 max-w-xl text-lg font-medium leading-relaxed text-teal"
               style={{ animationDelay: '130ms' }}
             >
-              We support Wind Farm Owners, IPPs, Investors and OEMs across the blade lifecycle —
-              from manufacturing to pre-commissioning.
+              We support Wind Farm Owners, IPPs, Investors and OEMs across the globe throughout the blade lifecycle — from supplier qualification and manufacturing to pre-commissioning.
             </p>
             <p
               className="enter-up mt-4 max-w-xl text-lg leading-relaxed text-white/70"
@@ -98,7 +97,7 @@ export default function HomePage() {
         <div className="reveal-up">
           <SectionHeading
             eyebrow="Experience Highlights"
-            title="17+ Years Across OEM, IPP and Independent Engineering"
+            title="17 Years Across OEM, IPP and Independent Engineering"
           />
         </div>
         <div className="mt-10 grid gap-5 sm:grid-cols-3">
@@ -144,9 +143,9 @@ export default function HomePage() {
       <Section tone="white">
         <div className="reveal-up">
           <SectionHeading
-            eyebrow="What We Do"
+            eyebrow="Specialist Capabilities"
             title="What We Do"
-            sub="Three areas of specialist blade expertise, delivered from an independent point of view."
+            sub="Three areas of wind turbine blade expertise, delivered from an independent perspective."
           />
         </div>
         <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -185,8 +184,8 @@ export default function HomePage() {
       <Section tone="mist">
         <div className="reveal-up">
           <SectionHeading
-            eyebrow="Why Choose Windleaf"
-            title="Why Choose Windleaf"
+            eyebrow="The Windleaf Advantage"
+            title="Why Trust Windleaf Energy?"
             sub="Six reasons clients trust us with critical blade decisions."
           />
         </div>
@@ -214,8 +213,10 @@ export default function HomePage() {
           <div className="reveal-left">
             <SectionHeading
               eyebrow="Technology Preview"
-              title="From Blade to Engineering Solution"
-              sub="Technology captures and analyses. Our engineers verify and decide."
+              title="Technology captures.
+Engineering interprets.
+Windleaf delivers."
+              sub="A complete, end-to-end pathway from inspection data to independent, actionable engineering solutions."
             />
           </div>
           <div className="reveal-right">
@@ -223,8 +224,7 @@ export default function HomePage() {
           </div>
         </div>
         <p className="reveal-up mt-10 max-w-3xl text-lg leading-relaxed text-charcoal/75">
-          Cameras, robotics and AI help us find potential blade issues earlier. Every finding is
-          checked by a Windleaf engineer before it becomes a recommendation.
+          Technology helps us capture and analyse information. Our engineers turn that information into independent, technically sound decisions and practical solutions.
         </p>
         <div className="reveal-up mt-8">
           <Button to="/ai-automation-robotics" className="group">
@@ -234,9 +234,9 @@ export default function HomePage() {
       </Section>
 
       <ClosingCTA
-        eyebrow="Closing"
+        eyebrow="Next Steps"
         title="Facing a Critical Blade Decision?"
-        text="Get independent, evidence-based engineering support from a team with 17+ years in wind turbine blades."
+        text="Get independent, evidence-based engineering support from a team with 17 years in wind turbine blades."
         buttonLabel="Start the Conversation"
       />
     </>

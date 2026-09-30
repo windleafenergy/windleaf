@@ -54,7 +54,7 @@ File structure under `src/`:
 
 ## Page content mapping (all copy verbatim from the PDF)
 - **Home**: hero (label "Independent Blade Engineering", H1, subhead, TEXT, two CTAs) with
-  silver blade motif → Experience Highlights (17+/11/8 stat boxes + OEM/Independent/IPP
+  silver blade motif → Experience Highlights (17/11/8 stat boxes + OEM/Independent/IPP
   experience strip + "not a client list" note) → What We Do (3 cards) → Why Choose Windleaf
   (6 reasons grid) → Technology Preview (compact TechFlow) → closing CTA "Facing a Critical
   Blade Decision?".
@@ -98,6 +98,6 @@ animations on stat boxes and the tech flow.
 - Confirm fonts load (Sora/Manrope) and brand tokens render (navy headings, green CTA hover).
 
 ## Open items (using placeholders, not blocking)
-Real project photos, project-example specifics, exact partner name/logo for Apex Wind Denmark,
+Real project photos, project-example specifics, exact partner name/logo for European Designers,
 Windergy India 2026 event details, and official contact details are marked "to be provided" in
 the draft — rendered as tasteful placeholders per the document's "Please Confirm" list.

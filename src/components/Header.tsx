@@ -185,7 +185,7 @@ export function Header() {
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-1 lg:flex">
-            {NAV.filter((n) => n.to !== '/').map((item) => (
+            {NAV.map((item) => (
               <NavLink key={item.to} label={item.label} to={item.to} active={path === item.to} />
             ))}
           </nav>
