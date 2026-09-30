@@ -555,34 +555,28 @@ export const WHY_IT_MATTERS = [
   },
 ]
 
+export type CapabilityStatus =
+  | 'Current capability'
+  | 'Current & developing'
+  | 'In development'
+  | 'Core capability'
+
 export type Capability = {
   title: string
   status: 'Current capability' | 'Current & developing' | 'In development' | 'Core capability'
   body: string
 }
 
-export const CAPABILITIES: Capability[] = [
-  {
-    title: 'Camera & Robotic Inspection Support',
-    status: 'Current capability',
-    body: 'Visual and NDT blade inspection supported by robotic and advanced camera technologies, giving our engineers clear images and inspection data to work with.',
-  },
-  {
-    title: 'AI & Inspection Data Analytics',
-    status: 'Current & developing',
-    body: 'AI-assisted analytics process inspection images and technical data, identify patterns and potential anomalies, and support faster, more consistent blade assessments.',
-  },
-  {
-    title: 'Robotic Internal Blade Inspection & Bonding Assessment',
-    status: 'In development',
-    body: 'We are advancing robotic inspection solutions to access internal blade areas and assess bonding effectiveness — helping identify potential structural issues that may not be visible through conventional inspection.',
-  },
-  {
-    title: 'AI-Based Early Structural Defect Detection',
-    status: 'In development',
-    body: 'We are developing AI-assisted solutions to identify potential structural issues in wind turbine blades at an early stage — enabling earlier intervention and helping reduce the risk of costly failures.',
-  },
-]
+export type CapabilityPillar = {
+  num: string
+  title: string
+  tagline: string
+  accent: 'teal' | 'leaf' | 'navy'
+  capabilities: Capability[]
+  deliverable: string
+}
+
+
 
 export const INNOVATION_LIST = [
   'AI-based structural defect detection & pattern screening',

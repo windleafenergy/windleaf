@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { SEO, WHY_IT_MATTERS, CAPABILITIES, INNOVATION_LIST, CAPABILITY_PILLARS } from '@/content/site'
+import { SEO, WHY_IT_MATTERS, INNOVATION_LIST, CAPABILITY_PILLARS } from '@/content/site'
 import { Button, Section, SectionHeading, stagger } from '@/components/ui'
 import { PageHero } from '@/components/sections'
 import { TechFlow } from '@/components/TechFlow'
@@ -136,7 +136,7 @@ export default function TechnologyPage() {
                         className="rounded-xl border border-hairline/80 bg-mist/50 p-4"
                       >
                         <div className="flex flex-wrap items-center gap-2">
-                          <StatusTag status={cap.status} />
+                          <StatusTag status={cap['status']} />
                         </div>
                         <h4 className="mt-2 text-base font-semibold text-navy">
                           {cap.title}
