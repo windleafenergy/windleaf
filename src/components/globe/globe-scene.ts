@@ -17,8 +17,8 @@ const PALETTE = {
   // Amber, not the brand teal.
   //
   // Teal failed on two counts at once: it is within a hue of the project green
-  // (#2dbe60), so alliance and project markers were indistinguishable at marker
-  // size, and it is the exact colour of the atmosphere shell, so alliance
+  // (#2dbe60), so collaboration and project markers were indistinguishable at
+  // marker size, and it is the exact colour of the atmosphere shell, so those
   // markers dissolved into their own glow near the limb. Amber is the only
   // brand colour far enough round the wheel to separate from both against a
   // blue-green planet.
@@ -26,7 +26,7 @@ const PALETTE = {
   // Note it is `sun`, which marks the HQ on the GlobalReach cards — no conflict
   // on the globe, where the HQ is white, but keep that in mind if the card
   // badges and the markers are ever unified.
-  alliance: '#ffc107',
+  collaboration: '#ffc107',
   site: '#2dbe60',
   comet: '#cfeee6',
 } as const
@@ -45,7 +45,7 @@ function srgb(hex: string): THREE.Color {
 
 function markerHex(country: Country): string {
   if (country.isHq) return PALETTE.hq
-  if (country.isAlliance) return PALETTE.alliance
+  if (country.isCollaboration) return PALETTE.collaboration
   return PALETTE.site
 }
 
@@ -113,9 +113,9 @@ type MarkerRecord = {
 const ROTOR_SIZE = 9
 
 /**
- * White, because amber now marks the alliance countries.
+ * White, because amber now marks the collaboration countries.
  *
- * Leaving hover on amber would have made every alliance marker look permanently
+ * Leaving hover on amber would have made every collaboration marker look always
  * hovered. White does double duty with the white HQ beacon, but the two are
  * shape-distinct — a thin outline ring on the surface versus a filled rotor —
  * and hover is transient while the HQ is always there.
@@ -488,7 +488,7 @@ export class GlobeScene {
       const color = markerHex(country)
       const surface = latLonToVector3(country.lat, country.lon, GLOBE_RADIUS)
       const normal = surface.clone().normalize()
-      const scale = country.isHq ? 1.5 : country.isAlliance ? 1.25 : 1
+      const scale = country.isHq ? 1.5 : country.isCollaboration ? 1.25 : 1
 
       // A turning rotor, pinned to the surface.
       //

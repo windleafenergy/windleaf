@@ -127,7 +127,7 @@ export default function AboutPage() {
           <SectionHeading
             eyebrow="Global Project Experience"
             title={`Global Engineering Reach Across ${COUNTRY_COUNT} Countries`}
-            sub="Rotate the globe to explore Windleaf blade engineering projects and technical alliances worldwide."
+            sub="Rotate the globe to explore Windleaf blade engineering projects and technical collaborations worldwide."
           />
         </div>
         <div className="mt-10">

@@ -1,7 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { SEO, SERVICES, SERVICE_QUICKLINKS, GALLERY, DESIGN_BOXES, COUNTRY_COUNT } from '@/content/site'
+import {
+  SEO,
+  SERVICES,
+  GALLERY,
+  DESIGN_BOXES,
+  COUNTRY_COUNT,
+  PROJECTS,
+} from '@/content/site'
 import { Button, Section, SectionHeading, stagger } from '@/components/ui'
 import { PageHero, ClosingCTA } from '@/components/sections'
 import ServiceQuickLinks from '@/components/ServiceQuickLinks'
@@ -12,93 +19,6 @@ export const metadata: Metadata = {
   alternates: { canonical: '/services' },
 }
 
-const PROJECT_EXAMPLES = [
-  {
-    number: '01',
-    title: 'GW WIND PROJECT',
-    country: 'China',
-    service: 'Technical Due Diligence & Factory Qualification',
-    need:
-      'Assess blade manufacturing capability, readiness and technical risks before project execution.',
-    support: [
-      'Blade factory qualification',
-      'TDD',
-      'Manufacturing capability assessment',
-      'Quality-system review',
-      'Risk mitigation',
-    ],
-    outcome:
-      'Independent technical assessment supporting manufacturing readiness and project risk mitigation.',
-  },
-
-  {
-    number: '02',
-    title: 'SASOL WIND PROJECT',
-    country: 'China → South Africa',
-    service: 'Manufacturing Surveillance',
-    need:
-      'Ensure blades manufactured in China met the technical and quality requirements of the South African project.',
-    support: [
-      'Manufacturing surveillance',
-      'Process audit',
-      'Blade quality assessment',
-      'Technical follow-up',
-    ],
-    outcome:
-      'Independent factory oversight connecting manufacturing execution with project requirements and delivery readiness.',
-  },
-
-  {
-    number: '03',
-    title: 'RIYAH WIND PROJECT',
-    country: 'Oman',
-    service: 'Blade Inspection & Repair Assessment',
-    need:
-      'Verify blade condition and repair readiness before commissioning.',
-    support: [
-      'Blade inspection',
-      'Defect assessment',
-      'Structural repair analysis',
-      'Technical evaluation',
-    ],
-    outcome:
-      'Independent engineering input supporting blade quality verification and pre-commissioning readiness.',
-  },
-
-  {
-    number: '04',
-    title: 'HORSE WIND PROJECT',
-    country: 'India',
-    service: 'IPP-Side Blade Engineering',
-    need:
-      'Independent technical assessment of Nordex blades for the IPP project.',
-    support: [
-      'Blade inspection',
-      'Defect assessment',
-      'Technical review',
-      'Engineering decision support',
-    ],
-    outcome:
-      'IPP-side engineering support for blade quality assessment and project readiness.',
-  },
-
-  {
-    number: '05',
-    title: 'TOTALENERGIES',
-    country: '2025–2026',
-    service: 'Independent IPP Blade Engineering Support',
-    need:
-      'Provide blade engineering support from the IPP perspective across active wind projects.',
-    support: [
-      'Blade inspection',
-      'Repair assessment',
-      'Technical review',
-      'Engineering support',
-    ],
-    outcome:
-      'Independent technical input supporting blade quality, repair decisions and project execution.',
-  },
-]
 export default function ServicesPage() {
   return (
     <>
@@ -117,7 +37,7 @@ export default function ServicesPage() {
         </div>
       </div>
 
-      {/* Our Work in Practice */}
+      {/* Projects */}
       <Section tone="white" id="work">
         <div className="reveal-up">
           <SectionHeading
@@ -152,11 +72,11 @@ export default function ServicesPage() {
         </div>
 
 
-        {/* Project example cards — a rail rather than a grid, so adding a third
-            example never forces a layout decision and the interaction matches
-            the service chips above. */}
-        <ScrollRail label="project examples" step={520} className="mt-10">
-          {PROJECT_EXAMPLES.map((project, n) => (
+        {/* Project cards — a rail rather than a grid, so adding another project
+            never forces a layout decision and the interaction matches the
+            service chips above. */}
+        <ScrollRail label="projects" step={520} className="mt-10">
+          {PROJECTS.map((project, n) => (
             <article
               key={project.number}
               className="reveal-up w-[88vw] max-w-[560px] shrink-0 snap-start overflow-hidden rounded-2xl border border-hairline bg-white transition-shadow duration-300 hover:shadow-lg hover:shadow-navy/10 sm:w-[70vw] lg:w-[calc(50%-0.75rem)]"
@@ -181,6 +101,15 @@ export default function ServicesPage() {
                 <p className="mt-1 text-xs leading-relaxed text-white/60">
                   {project.service}
                 </p>
+
+                {/* Capacity / site line, where one is known. Optional — most
+                    projects have no public figure to quote, and an empty rule
+                    under the header reads as missing data rather than none. */}
+                {project.context && (
+                  <p className="mt-3 border-t border-white/15 pt-3 text-[11px] font-medium leading-relaxed text-leaf">
+                    {project.context}
+                  </p>
+                )}
               </div>
 
               {/* Content */}

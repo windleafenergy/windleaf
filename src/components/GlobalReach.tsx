@@ -62,7 +62,7 @@ export function GlobalReach() {
                   }
                   className={`reveal-up flex h-full flex-col rounded-2xl border p-6 ${country.isHq
                       ? 'border-sun/45 bg-sun/[0.06]'
-                      : country.isAlliance
+                      : country.isCollaboration
                         ? 'border-teal/45 bg-teal/[0.05]'
                         : 'border-hairline bg-white'
                     }`}
@@ -96,9 +96,12 @@ export function GlobalReach() {
                       </span>
                     )}
 
-                    {country.isAlliance && (
+                    {/* "Technical Collaboration", not "Alliance" — these are
+                        independent companies engaged on specific scopes, and
+                        "alliance" would claim a standing commercial tie. */}
+                    {country.isCollaboration && (
                       <span className="shrink-0 rounded-full bg-teal px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                        Alliance
+                        Technical Collaboration
                       </span>
                     )}
                   </div>

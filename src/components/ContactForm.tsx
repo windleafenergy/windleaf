@@ -1,35 +1,21 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState, useTransition, type FormEvent } from 'react'
 import {
   FORM_FIELDS,
   AREA_OF_INTEREST,
   FORM_COUNTRIES,
 } from '@/content/site'
 import { SectionHeading } from '@/components/ui'
+import { sendEnquiry } from '@/app/contact/actions'
+import {
+  fieldError,
+  HONEYPOT_FIELD,
+  MAX_LENGTH,
+  PHONE_STRIP,
+} from '@/lib/enquiry'
 
 type Status = 'idle' | 'success' | 'error'
-
-/**
- * Length caps, by field.
- *
- * Kept next to `fieldError` rather than in `site.ts` on purpose: these are
- * validation rules, not copy, and a cap that disagreed with the validator
- * would let someone fill a field the form then refuses to accept.
- *
- * They are also a spam control. An uncapped textarea on a public form is an
- * invitation to paste a few hundred kilobytes into whatever inbox this
- * eventually posts to.
- */
-const MAX_LENGTH: Record<string, number> = {
-  name: 80,
-  company: 100,
-  email: 120,
-  phone: 20,
-  location: 120,
-  turbine: 160,
-  requirement: 1500,
-}
 
 /** Lets the browser fill known details rather than making people retype them. */
 const AUTOCOMPLETE: Record<string, string> = {
@@ -39,52 +25,11 @@ const AUTOCOMPLETE: Record<string, string> = {
   phone: 'tel',
 }
 
-/**
- * Anything that is not a digit or the punctuation real phone numbers are
- * written with. Global, so it is only ever used with `replace` — `.test()` on
- * a global regex advances `lastIndex` between calls and starts returning false
- * for input it rejected a moment earlier.
- */
-const PHONE_STRIP = /[^\d\s+().-]/g
-
-/**
- * Single source of truth for what makes one field invalid.
- *
- * Both the submit check and the live re-check call this, so a red border can
- * never disagree with what submitting would actually say. Keep new rules here
- * rather than inline in the submit handler.
- */
-function fieldError(name: string, raw: string): boolean {
-  const value = raw.trim()
-  const field = FORM_FIELDS.find((f) => f.name === name)
-
-  if (field?.required && !value) return true
-  // Format rules only apply to something typed — an empty optional field is
-  // not an error.
-  if (!value) return false
-
-  // Checked here as well as capped on the input, because `maxLength` is a
-  // convenience for typing and nothing more: it does not survive a paste in
-  // every browser, and it does not exist at all for anything POSTing directly.
-  const limit = MAX_LENGTH[name]
-  if (limit && value.length > limit) return true
-
-  if (name === 'email') return !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-  if (name === 'phone') {
-    // 7 digits is the shortest real subscriber number; the punctuation is not
-    // counted towards it, so "+1 (555) 010-9999" passes on its digits alone.
-    const digits = value.replace(/\D/g, '')
-    if (digits.length < 7 || digits.length > 15) return true
-    return value.replace(PHONE_STRIP, '') !== value
-  }
-  if (name === 'requirement') return value.length < 10
-
-  return false
-}
-
 export function ContactForm() {
   const [status, setStatus] = useState<Status>('idle')
   const [errors, setErrors] = useState<Record<string, boolean>>({})
+  const [message, setMessage] = useState<string | null>(null)
+  const [pending, startTransition] = useTransition()
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -104,12 +49,32 @@ export function ContactForm() {
 
     if (Object.keys(nextErrors).length > 0) {
       setStatus('error')
+      setMessage(null)
       return
     }
 
-    setStatus('success')
-    setErrors({})
-    form.reset()
+    // The form is only reset once the server confirms delivery. Clearing it
+    // optimistically would throw away everything the person typed if the send
+    // then failed, leaving them to write it all again.
+    startTransition(async () => {
+      const result = await sendEnquiry(data)
+
+      if (result.ok) {
+        setStatus('success')
+        setErrors({})
+        setMessage(null)
+        form.reset()
+        return
+      }
+
+      setStatus('error')
+      setMessage(result.error)
+      // The server re-validates independently, so trust its verdict over the
+      // one the client just computed.
+      if (result.fields) {
+        setErrors(Object.fromEntries(result.fields.map((name) => [name, true])))
+      }
+    })
   }
 
   /**
@@ -343,34 +308,73 @@ export function ContactForm() {
             })}
           </div>
 
+          {/* Honeypot. Hidden from sight, from assistive tech and from the tab
+              order — a human cannot reach it, so anything in it came from a
+              script filling every input it found. `position:absolute` with
+              `left:-9999px` rather than `display:none`, because some bots skip
+              fields that are explicitly not displayed. */}
+          <div aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
+            <label htmlFor={HONEYPOT_FIELD}>Website</label>
+            <input
+              id={HONEYPOT_FIELD}
+              name={HONEYPOT_FIELD}
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
+
           {status === 'error' && (
-            <p className="mt-5 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600">
-              Please check the highlighted fields and make sure
-              all required information is valid.
+            <p
+              role="alert"
+              className="mt-5 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600"
+            >
+              {message ??
+                'Please check the highlighted fields and make sure all required information is valid.'}
             </p>
           )}
 
           <button
             type="submit"
-            className="group mt-6 inline-flex items-center gap-2 rounded-md bg-navy px-7 py-4 text-base font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-green"
+            disabled={pending}
+            className="group mt-6 inline-flex items-center gap-2 rounded-md bg-navy px-7 py-4 text-base font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-green disabled:pointer-events-none disabled:opacity-60"
           >
-            Send Enquiry
+            {pending ? 'Sending…' : 'Send Enquiry'}
 
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M3 8h9M8 4l4 4-4 4"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            {pending ? (
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+                className="animate-spin"
+              >
+                <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" opacity="0.3" />
+                <path
+                  d="M14 8a6 6 0 0 0-6-6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            ) : (
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M3 8h9M8 4l4 4-4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
           </button>
         </form>
       )}

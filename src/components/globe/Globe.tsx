@@ -375,7 +375,7 @@ function InteractiveGlobe({ className = '' }: { className?: string }) {
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full bg-sun shadow-[0_0_8px_#ffc107]" />
-              <span>European Design Collaboration</span>
+              <span>Technical Collaboration</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-green shadow-[0_0_6px_#2dbe60]" />
@@ -422,9 +422,9 @@ function InteractiveGlobe({ className = '' }: { className?: string }) {
 
                     {/* Amber to match the marker on the sphere. A teal badge
                         beside an amber rotor reads as two different things. */}
-                    {display.isAlliance && (
+                    {display.isCollaboration && (
                       <span className="rounded-full bg-sun px-2 py-0.5 text-[10px] font-bold text-navy">
-                        Alliance
+                        Technical Collaboration
                       </span>
                     )}
                   </div>
@@ -548,10 +548,13 @@ function InteractiveGlobe({ className = '' }: { className?: string }) {
                   {country.capabilities.map((capability) => capability.title).join(' / ')}
                 </span>
               </span>
-              {/* HQ white, Alliance amber — the same two colours the markers
-                  use on the sphere. Both chips were differently-coloured from
-                  their own markers before, so the dock and the globe disagreed
-                  about what each country was. */}
+              {/* HQ white, collaboration amber — the same two colours the
+                  markers use on the sphere. Both chips were differently
+                  coloured from their own markers before, so the dock and the
+                  globe disagreed about what each country was.
+                  Abbreviated to "Collaboration" here only because the chip is
+                  9px in a dense rail; everywhere with room says "Technical
+                  Collaboration" in full. */}
               {country.isHq && (
                 <span
                   className={`rounded px-1 text-[9px] font-bold ${selected ? 'bg-white text-navy' : 'border border-hairline bg-white text-navy'}`}
@@ -559,11 +562,11 @@ function InteractiveGlobe({ className = '' }: { className?: string }) {
                   HQ
                 </span>
               )}
-              {country.isAlliance && (
+              {country.isCollaboration && (
                 <span
                   className={`rounded px-1 text-[9px] font-bold ${selected ? 'bg-sun text-navy' : 'bg-sun/20 text-navy'}`}
                 >
-                  Alliance
+                  Collaboration
                 </span>
               )}
             </button>

@@ -118,11 +118,11 @@ export const EXPERIENCE = [
 export const WHAT_WE_DO = [
   {
     title: 'Blade Engineering',
-    body: 'comprehensive control of materials, manufacturing processes, composite laminates, bonding, dimensions, visual condition, NDT, repairs, documentation, traceability, and final inspection to ensure every component consistently meets specified quality, safety, reliability, and customer requirements.',
+    body: 'Independent blade engineering and design support across blade development, structural concepts, materials, laminates, bonding and manufacturing optimisation. Through our European engineering collaboration with Apex Wind ApS, Denmark, we support advanced blade design engineering and technical solutions.',
   },
   {
     title: 'Quality, Inspection & Assurance',
-    body: 'Quality, Inspection & Assurance encompasses comprehensive control of materials, manufacturing processes, composite laminates, bonding, dimensions, visual condition, NDT, repairs, documentation, traceability, and final inspection to ensure every component consistently meets specified quality, safety, reliability, and customer requirements.',
+    body: 'Independent quality engineering, manufacturing surveillance and blade inspection covering visual inspection, NDT, dimensional checks, process compliance, defect assessment, repair verification and technical documentation.',
   },
   {
     title: 'Technical Due Diligence & Advisory',
@@ -146,8 +146,8 @@ export const TECH_FLOW = [
   },
   {
     num: '03',
-    title: 'Engineering Analysis',
-    body: 'Structutal ( Design Engineering by Apex Wind ApS Denmark FEA)',
+    title: 'Structural Assessment',
+    body: ' Design Engineering & FEA support through Apex Wind ApS, Denmark',
     kind: 'capture' as const,
   },
   {
@@ -171,7 +171,14 @@ export const TECH_FLOW = [
 ]
 
 /**
- * European technology and engineering collaborations.
+ * European technical collaborations.
+ *
+ * **"Collaboration", never "alliance" or "partner".** These are technical
+ * collaborations only — APEX WIND ApS and LUKAN WIND ROBOTICS are independent
+ * companies Windleaf works with on specific engineering and inspection scopes.
+ * "Alliance" implies a standing commercial tie that does not exist, and this is
+ * the kind of claim a reader takes at face value, so the wording is load-bearing
+ * rather than cosmetic.
  *
  * Two separate companies with two separate remits. They used to be one reason
  * card whose body ran "…validation and FEA.\nLUKAN WIND ROBOTICS — Denmark\n
@@ -181,14 +188,14 @@ export const TECH_FLOW = [
  *
  * Declared above COUNTRIES because the Denmark entry reads from it: these are
  * current collaborations, distinct from the historic Vestas work that fills the
- * rest of that card, and the partner names must not be typed out twice.
+ * rest of that card, and the company names must not be typed out twice.
  */
-export const ALLIANCES = [
+export const COLLABORATIONS = [
   {
     name: 'APEX WIND ApS',
     country: 'Denmark',
     iso: 'DK',
-    focus: 'European Design Collaboration',
+    focus: 'Design Engineering',
     detail: ['Design support', 'Technical Review', 'Validation', 'FEA'],
   },
   {
@@ -213,7 +220,12 @@ export type Country = {
   region: Region
 
   isHq?: boolean
-  isAlliance?: boolean
+  /**
+   * A country where Windleaf works with an external technical collaborator.
+   * Named for what it is: the previous `isAlliance` kept pulling the word
+   * "Alliance" back into badges that should read "Technical Collaboration".
+   */
+  isCollaboration?: boolean
   hubType?: string
   card: string[]
   capabilities: {
@@ -371,7 +383,7 @@ export const COUNTRIES: Country[] = [
     lon: 9.5018,
     flag: 'DK',
     region: 'Europe',
-    isAlliance: true,
+    isCollaboration: true,
     hubType: 'European Design & Robotics Collaboration',
     card: [
       'European Design Collaboration',
@@ -382,10 +394,10 @@ export const COUNTRIES: Country[] = [
     ],
     capabilities: [
       // Current collaborations first — the Vestas entries below are career
-      // history, and leading a card with history buried the live partnerships.
-      ...ALLIANCES.map((ally) => ({
-        title: `${ally.focus} — ${ally.name}`,
-        detail: ally.detail.join(' • ') + '.',
+      // history, and leading a card with history buried the live work.
+      ...COLLABORATIONS.map((collaborator) => ({
+        title: `Technical Collaboration — ${collaborator.name}`,
+        detail: `${collaborator.focus}: ${collaborator.detail.join(' • ')}.`,
       })),
       {
         title: 'Vestas Global Blade Engineering',
@@ -977,6 +989,120 @@ export const SERVICES: Service[] = [
   },
 ]
 
+export type Project = {
+  number: string
+  title: string
+  /** Country, or a region where the work spanned several. */
+  country: string
+  service: string
+  need: string
+  support: string[]
+  outcome: string
+  /** Capacity / site line, shown under the header where one is known. */
+  context?: string
+}
+
+/**
+ * Delivered projects, newest and largest first.
+ *
+ * Lives here rather than in `/services` because it is client-editable copy like
+ * everything else in this file, and because it is the kind of content that gets
+ * asked for on more than one page — it was a page-local const, which is how it
+ * would have ended up copy-pasted the first time it was wanted elsewhere.
+ */
+export const PROJECTS: Project[] = [
+  {
+    number: '01',
+    title: 'TOTALENERGIES',
+    country: 'Global Wind Projects',
+    service: 'Independent IPP Blade Engineering Support',
+    need: 'Provide independent blade engineering expertise across global wind projects, from technical due diligence and OEM qualification through manufacturing and field activities.',
+    support: [
+      'Technical due diligence — onshore & offshore',
+      'Blade & OEM qualification',
+      'Blade factory qualification',
+      'Manufacturing surveillance',
+      'Blade inspection',
+      'Root cause analysis',
+    ],
+    outcome:
+      'Independent blade engineering input supporting technical decisions, manufacturing quality, qualification and risk management across global wind projects.',
+  },
+
+  {
+    number: '02',
+    title: 'MIRNY 1 GW',
+    country: 'Kazakhstan',
+    service: 'Technical Due Diligence & OEM Factory Assessment',
+    need: 'Assess the manufacturing capability and technical readiness of OEM blade suppliers for the 1 GW Mirny wind project.',
+    support: [
+      'Technical due diligence at Envision',
+      'OEM factory visit and manufacturing process assessment',
+      'Technical and process findings identification',
+      'SANY — 200 MW factory assessment',
+      'Envision — 800 MW factory assessment',
+      'Corrective-action support with SANY',
+      'Follow-up validation of manufacturing readiness',
+    ],
+    outcome:
+      'Independent identification of manufacturing and technical risks during TDD, supporting corrective actions and improved OEM readiness as the project progressed toward execution.',
+  },
+
+  {
+    number: '03',
+    title: 'SASOL WIND PROJECT',
+    country: 'South Africa',
+    service: 'Manufacturing Surveillance & Pre-Commissioning Blade Inspection',
+    need: 'Support blade manufacturing quality and final technical readiness for the 140 MW Mulilo De Aar 2 South Wind Farm, part of the 260 MW renewable energy project supplying Sasol and Air Liquide near De Aar, South Africa.',
+    support: [
+      'Manufacturing surveillance in China',
+      'Process & quality auditing',
+      'Manufacturing engineering review',
+      'Blade quality assessment',
+      'On-site blade inspection in South Africa',
+      'Pre-commissioning verification',
+    ],
+    outcome:
+      'Independent oversight from blade manufacturing through final field inspection, helping verify blade quality, condition and readiness before project commissioning.',
+    context: '260 MW renewable energy project | 140 MW Wind + 120 MW Solar PV | De Aar, South Africa',
+  },
+
+  {
+    number: '04',
+    title: 'PDO / RIYAH 1 & RIYAH 2',
+    country: 'Oman',
+    service: 'Technical Due Diligence & Blade Engineering Support',
+    need: 'Provide independent blade engineering assessment and technical support for the Riyah 1 & Riyah 2 wind projects within the PDO concession in Oman.',
+    support: [
+      'Technical due diligence',
+      'Blade technical assessment',
+      'Defect & repair assessment',
+      'Engineering review',
+      'Remote technical support from India',
+    ],
+    outcome:
+      'Independent blade engineering support enabling timely technical assessment, defect evaluation and informed project decisions.',
+    context: '234 MW | 36 turbines | PDO Block 6 | Oman',
+  },
+
+  {
+    number: '05',
+    title: 'REMBECOURT',
+    country: 'France',
+    service: 'Process & Product Audit',
+    need: 'Assess blade manufacturing processes and product quality for an OEM wind project supporting the French market.',
+    support: [
+      'Process audit',
+      'Product audit',
+      'Manufacturing engineering review',
+      'Process compliance assessment',
+      'Quality assessment',
+    ],
+    outcome:
+      'Independent assessment of manufacturing processes and blade product quality, supporting OEM project requirements and technical risk reduction.',
+  },
+]
+
 export const DESIGN_BOXES = [
   {
     title: 'What we support',
@@ -1260,13 +1386,13 @@ export const STATS = [
 type Reason = {
   title: string
   body: string
-  /** Rendered as a partner table instead of the plain body where present. */
-  alliances?: typeof ALLIANCES
+  /** Rendered as a collaborator table instead of the plain body where present. */
+  collaborations?: typeof COLLABORATIONS
 }
 
 export const SIX_REASONS: Reason[] = [
   {
-    title: 'Decades of Blade Engineering Experience',
+    title: '17 Years of Blade Engineering Experience',
     body: 'Hands-on expertise across blade engineering, manufacturing, quality, inspection, defects and repair.',
   },
   {
@@ -1282,11 +1408,11 @@ export const SIX_REASONS: Reason[] = [
     body: "Independent engineering experience with DNV GL, and objective advice focused on your interests — not the manufacturer's.",
   },
   {
-    title: 'European Design & Robotics Alliances',
+    title: 'European Design & Robotics Collaboration',
     // The body is the fallback for surfaces that render the reason as prose —
     // /how-we-work shows titles only, so the title has to stand alone too.
-    body: 'Design engineering with APEX WIND ApS and robotic inside-blade inspection with LUKAN WIND ROBOTICS, both based in Denmark.',
-    alliances: ALLIANCES,
+    body: 'Technical collaboration with APEX WIND ApS on design engineering and with LUKAN WIND ROBOTICS on robotic inside-blade inspection, both based in Denmark.',
+    collaborations: COLLABORATIONS,
   },
   {
     title: 'Technology-Enabled Solutions',
