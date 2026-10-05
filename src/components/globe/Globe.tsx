@@ -225,18 +225,28 @@ function InteractiveGlobe({ className = '' }: { className?: string }) {
   )
   const [hoveredCountry, setHoveredCountry] = useState<Country | null>(null)
   const [region, setRegion] = useState<RegionFilter>('All')
-  // Starts off, and that is the honest state: the globe opens held on the HQ
-  // with the panel reading SELECTED. It used to open spinning while still
-  // claiming a selection, so by the time you had scrolled the globe into view
-  // the named country had rotated well round the side — the panel and the
-  // sphere disagreed about what you were looking at.
-  const [autoRotate, setAutoRotate] = useState(false)
+  // Opens spinning, starting from the HQ.
+  //
+  // The globe is seeded facing India and then released, so the first thing you
+  // see is the home country before the planet turns. The panel shows India as
+  // the active entry on arrival, which is accurate at that moment and drifts as
+  // it spins — that is the known cost of auto-spin being on, and the reason it
+  // used to default to off. Any click, drag or dock selection pins the globe
+  // and stops the spin, which re-synchronises the two immediately.
+  const [autoRotate, setAutoRotate] = useState(true)
   const [showArcs, setShowArcs] = useState(true)
 
   const attachScene = useCallback((scene: GlobeScene | null) => {
     sceneRef.current = scene
-    // Pin the opening selection as soon as there is a scene to pin. The scene
-    // already starts rotated to the hub; this is what stops it drifting off.
+    // Aim the globe at the HQ before anything else, so the spin begins from
+    // India rather than from wherever the sphere happened to be built.
+    //
+    // `focusCountry` also pins, and that pin is released a moment later by the
+    // `autoRotate` effect below — React runs child effects before parent ones,
+    // so this (called from GlobeCanvas's effect) always lands first and the
+    // parent's `setAutoRotate(true)` always lands second. That order is what
+    // produces "starts on India, then spins"; reverse it and the pin wins, and
+    // the globe sits still.
     if (scene) scene.focusCountry(activeCountry)
     // `activeCountry` is only read to seed the view, and the scene is attached
     // once — re-running this on every selection would fight `focus` below.
@@ -542,8 +552,18 @@ function InteractiveGlobe({ className = '' }: { className?: string }) {
                 >
                   {country.name}
                 </span>
+                {/* Country name only on phones.
+                    India's capability list is five titles joined with " / " —
+                    well over 100 characters, which made a single chip wider
+                    than the viewport. The chip is `shrink-0` inside a rail, so
+                    it does not wrap or compress; it just ran off the edge and
+                    the text was clipped mid-word.
+                    Capped with `truncate` above `sm` too, so a long list cannot
+                    push the chip to an absurd width on desktop either — the
+                    inspector panel above carries the full detail. */}
                 <span
-                  className={`text-[11px] ${selected ? 'text-white/70' : 'text-charcoal/60'}`}
+                  className={`hidden text-[11px] sm:block sm:max-w-[34ch] sm:truncate ${selected ? 'text-white/70' : 'text-charcoal/60'
+                    }`}
                 >
                   {country.capabilities.map((capability) => capability.title).join(' / ')}
                 </span>

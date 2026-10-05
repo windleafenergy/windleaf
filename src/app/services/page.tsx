@@ -13,6 +13,7 @@ import { Button, Section, SectionHeading, stagger } from '@/components/ui'
 import { PageHero, ClosingCTA } from '@/components/sections'
 import ServiceQuickLinks from '@/components/ServiceQuickLinks'
 import { ScrollRail } from '@/components/ScrollRail'
+import { ProjectCard } from '@/components/ProjectCard'
 export const metadata: Metadata = {
   title: SEO.services.title,
   description: SEO.services.description,
@@ -72,91 +73,39 @@ export default function ServicesPage() {
         </div>
 
 
-        {/* Project cards — a rail rather than a grid, so adding another project
-            never forces a layout decision and the interaction matches the
-            service chips above. */}
-        <ScrollRail label="projects" step={520} className="mt-10">
+        {/* Phones get a plain stacked list, not the rail.
+            A rail card was `w-[88vw]` inside a container that also reserves a
+            36px arrow gutter on each side, so on a 360px screen the card was
+            always wider than the space it had — the right-hand edge of every
+            card was cut off and no amount of swiping reached it. Below `sm`
+            there is no room for a side-scrolling card that is readable, so the
+            cards simply stack at full width. */}
+        <div className="mt-10 space-y-6 sm:hidden">
           {PROJECTS.map((project, n) => (
-            <article
+            <ProjectCard
               key={project.number}
-              className="reveal-up w-[88vw] max-w-[560px] shrink-0 snap-start overflow-hidden rounded-2xl border border-hairline bg-white transition-shadow duration-300 hover:shadow-lg hover:shadow-navy/10 sm:w-[70vw] lg:w-[calc(50%-0.75rem)]"
+              project={project}
+              className="reveal-up w-full"
               style={stagger(n)}
-            >
-              {/* Header */}
-              <div className="bg-navy px-6 py-4">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-xs font-bold tracking-widest text-leaf">
-                    {project.number}
-                  </span>
-
-                  <span className="text-xs font-medium text-white/60">
-                    {project.country}
-                  </span>
-                </div>
-
-                <h3 className="mt-2 font-display text-lg font-semibold text-white">
-                  {project.title}
-                </h3>
-
-                <p className="mt-1 text-xs leading-relaxed text-white/60">
-                  {project.service}
-                </p>
-
-                {/* Capacity / site line, where one is known. Optional — most
-                    projects have no public figure to quote, and an empty rule
-                    under the header reads as missing data rather than none. */}
-                {project.context && (
-                  <p className="mt-3 border-t border-white/15 pt-3 text-[11px] font-medium leading-relaxed text-leaf">
-                    {project.context}
-                  </p>
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="divide-y divide-hairline">
-                {/* Project Need */}
-                <div className="px-6 py-5">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-teal">
-                    Project Need
-                  </span>
-
-                  <p className="mt-2 text-sm leading-relaxed text-charcoal/75">
-                    {project.need}
-                  </p>
-                </div>
-
-                {/* Windleaf Support */}
-                <div className="px-6 py-5">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-teal">
-                    Windleaf Support
-                  </span>
-
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {project.support.map((item) => (
-                      <span
-                        key={item}
-                        className="rounded-md border border-teal/20 bg-teal/[0.06] px-2.5 py-1 text-[11px] font-medium text-[#0d6d70]"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Value Delivered */}
-                <div className="px-6 py-5">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-teal">
-                    Value Delivered
-                  </span>
-
-                  <p className="mt-2 text-sm leading-relaxed text-charcoal/75">
-                    {project.outcome}
-                  </p>
-                </div>
-              </div>
-            </article>
+            />
           ))}
-        </ScrollRail>
+        </div>
+
+        {/* Tablet and up: the rail, where there is width for it and the
+            interaction matches the service chips above. */}
+        <div className="hidden sm:block">
+          <ScrollRail label="projects" step={520} className="mt-10">
+            {PROJECTS.map((project, n) => (
+              <ProjectCard
+                key={project.number}
+                project={project}
+                className="reveal-up w-[70vw] max-w-[560px] shrink-0 snap-start lg:w-[calc(50%-0.75rem)]"
+                style={stagger(n)}
+              />
+            ))}
+          </ScrollRail>
+        </div>
+
         <div className="mt-8">
           <Button to="/contact" className="group">
             Discuss a Similar Project
