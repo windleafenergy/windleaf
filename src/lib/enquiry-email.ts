@@ -1,4 +1,5 @@
 import { CONTACT, FOUNDER } from '@/content/site'
+import { SITE_URL } from '@/lib/site-url'
 
 /**
  * The enquiry notification email.
@@ -14,10 +15,14 @@ import { CONTACT, FOUNDER } from '@/content/site'
  *   stack.
  * - Every style inline. `<style>` blocks are stripped by Gmail's web client and
  *   several others; a stylesheet would simply not arrive.
- * - No external images, so no logo file. Most clients block remote images until
- *   the reader clicks "show images", and a brand that depends on one shows up as
- *   a broken-image icon. The wordmark is set in type instead, which always
- *   renders.
+ * - The logo is a remote image, and the type wordmark stays underneath it as the
+ *   fallback. Most clients block remote images until the reader clicks "show
+ *   images", so a header that is *only* a logo arrives as an empty box. Both
+ *   together means it is branded when images load and still legible when they
+ *   do not.
+ * - The logo URL must be absolute and public. It is skipped entirely unless
+ *   SITE_URL is https, because a `http://localhost:3000/...` src in a real
+ *   inbox is a guaranteed broken image.
  * - 600px maximum width — the long-standing safe width for desktop preview
  *   panes, and it scales down cleanly on a phone.
  * - `role="presentation"` on layout tables, so screen readers announce the
@@ -111,6 +116,18 @@ export function enquiryEmail(values: Values): {
       </td></tr>`
   }).join('')
 
+  // `logo-white.png` is 722x281; displayed at 150px wide the browser picks the
+  // height, but Outlook needs both or it reserves the full intrinsic size and
+  // blows the header open. 150 x 58 keeps the 2.57:1 ratio.
+  //
+  // Skipped unless the site is on a real https origin — a localhost src would
+  // arrive in the inbox as a permanently broken image.
+  const logoImg = SITE_URL.startsWith('https://')
+    ? `<img src="${SITE_URL}/logo-white.png" width="150" height="58"
+           alt="Windleaf Energy Solutions"
+           style="display:block;width:150px;height:58px;margin:0 0 16px;border:0;outline:none;text-decoration:none" />`
+    : ''
+
   const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -134,6 +151,7 @@ export function enquiryEmail(values: Values): {
 
         <!-- Header -->
         <tr><td style="background:${NAVY};padding:26px 32px">
+          ${logoImg}
           <p style="margin:0;font-size:17px;font-weight:700;letter-spacing:-0.2px;color:#ffffff">
             Windleaf <span style="color:${GREEN}">Energy Solutions</span>
           </p>

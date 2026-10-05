@@ -5,6 +5,7 @@ import {
   FORM_FIELDS,
   AREA_OF_INTEREST,
   FORM_COUNTRIES,
+  DIAL_CODES,
 } from '@/content/site'
 import { SectionHeading } from '@/components/ui'
 import { sendEnquiry } from '@/app/contact/actions'
@@ -31,11 +32,34 @@ export function ContactForm() {
   const [message, setMessage] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
+  /**
+   * Dialling code for the country currently selected, shown as a fixed prefix
+   * on the phone field. Empty until a country is chosen, in which case the
+   * field behaves exactly as it did before and the enquirer can type their own
+   * `+code` — better than guessing a default and silently mislabelling a
+   * number as Indian.
+   */
+  const [dial, setDial] = useState('')
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const form = event.currentTarget
     const data = new FormData(form)
+
+    // Fold the prefix into the submitted value, so what reaches the inbox is a
+    // number someone can dial. The prefix is presentation — it lives outside
+    // the input, so it is not in the FormData on its own.
+    const typed = String(data.get('phone') ?? '').trim()
+    if (dial && typed) {
+      const bare = typed.replace(/^\+/, '').trim()
+      // Guard against "+968 +968 …": some people type the code anyway, and the
+      // prefix sits right next to the caret inviting exactly that.
+      const local = bare.startsWith(dial.slice(1))
+        ? bare.slice(dial.length - 1).trim()
+        : bare
+      data.set('phone', `${dial} ${local}`)
+    }
 
     const nextErrors: Record<string, boolean> = {}
 
@@ -94,6 +118,11 @@ export function ContactForm() {
 
     const { name } = target
     if (!name) return
+
+    // Picking a country sets the phone prefix. Change events bubble to the
+    // form, so this is caught here rather than needing the select to be
+    // controlled — which would mean managing its value too.
+    if (name === 'country') setDial(DIAL_CODES[target.value] ?? '')
 
     // Strip anything that is not part of a phone number, in place. `type="tel"`
     // deliberately does not restrict input — it only hints at a keypad — so
@@ -279,30 +308,67 @@ export function ContactForm() {
                   {field.name !== 'country' &&
                     field.name !== 'area' &&
                     field.name !== 'requirement' && (
-                      <input
-                        id={field.name}
-                        name={field.name}
-                        type={field.type}
-                        placeholder={field.placeholder}
-                        maxLength={MAX_LENGTH[field.name]}
-                        // A numeric keypad on phones, and the browser's own
-                        // autofill for the rest. `type` alone gets neither.
-                        inputMode={
-                          field.name === 'phone'
-                            ? 'tel'
-                            : field.name === 'email'
-                              ? 'email'
-                              : undefined
-                        }
-                        autoComplete={AUTOCOMPLETE[field.name]}
-                        aria-invalid={
-                          errors[field.name]
-                            ? true
+                      // The phone field gets the dialling code as a fixed
+                      // prefix once a country is picked. It sits outside the
+                      // input — not as placeholder or pre-filled text — so it
+                      // cannot be half-deleted while typing, and the border is
+                      // moved to this wrapper so the two read as one control.
+                      <div
+                        className={
+                          field.name === 'phone' && dial
+                            ? `flex items-stretch overflow-hidden rounded-md border bg-white transition-colors focus-within:border-green ${errors[field.name] ? 'border-red-400' : 'border-hairline'
+                            }`
                             : undefined
                         }
-                        className={inputCls(field.name)}
-                      />
+                      >
+                        {field.name === 'phone' && dial && (
+                          <span className="flex shrink-0 select-none items-center border-r border-hairline bg-mist px-3 text-sm font-semibold text-navy">
+                            {dial}
+                          </span>
+                        )}
+
+                        <input
+                          id={field.name}
+                          name={field.name}
+                          type={field.type}
+                          placeholder={
+                            field.name === 'phone' && dial
+                              ? 'Number without country code'
+                              : field.placeholder
+                          }
+                          maxLength={MAX_LENGTH[field.name]}
+                          // A numeric keypad on phones, and the browser's own
+                          // autofill for the rest. `type` alone gets neither.
+                          inputMode={
+                            field.name === 'phone'
+                              ? 'tel'
+                              : field.name === 'email'
+                                ? 'email'
+                                : undefined
+                          }
+                          autoComplete={AUTOCOMPLETE[field.name]}
+                          aria-invalid={
+                            errors[field.name]
+                              ? true
+                              : undefined
+                          }
+                          aria-describedby={
+                            field.name === 'phone' && dial ? 'phone-dial' : undefined
+                          }
+                          className={
+                            field.name === 'phone' && dial
+                              ? 'w-full min-w-0 bg-transparent px-4 py-3 text-sm text-charcoal outline-none placeholder:text-charcoal/40'
+                              : inputCls(field.name)
+                          }
+                        />
+                      </div>
                     )}
+
+                  {field.name === 'phone' && dial && (
+                    <p id="phone-dial" className="mt-1.5 text-xs text-charcoal/45">
+                      Country code {dial} is added automatically.
+                    </p>
+                  )}
                 </div>
               )
             })}
