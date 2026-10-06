@@ -28,5 +28,14 @@ export const SITE_URL = (fromEnv ?? 'http://localhost:3000').replace(/\/$/, '')
  * without that, Vercel preview URLs get crawled and compete with the live site
  * for the same content.
  */
-export const IS_PRODUCTION_SITE =
-  process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production'
+export const IS_PRODUCTION_SITE = process.env.VERCEL_ENV
+  ? // On Vercel, VERCEL_ENV is the only honest signal: 'production',
+    // 'preview' or 'development'. NODE_ENV must NOT be consulted here — Next
+    // sets it to 'production' for every `next build`, including preview
+    // builds, so `VERCEL_ENV === 'production' || NODE_ENV === 'production'`
+    // was true on previews and served them `index, follow`. That is exactly
+    // the case this flag exists to prevent.
+    process.env.VERCEL_ENV === 'production'
+  : // Not on Vercel (self-hosted, or `next start` locally): fall back to the
+    // build mode, which is the only signal available.
+    process.env.NODE_ENV === 'production'
